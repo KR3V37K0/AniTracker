@@ -8,14 +8,12 @@ public class ShikimoriAPI : MonoBehaviour
     {
         // Подписываемся на событие успешной авторизации
         ConnectionData.OnUserAuthenticated += OnUserAuthenticated;
-        Debug.Log("Sub");
     }
 
     void OnDisable()
     {
         // Отписываемся от события, чтобы избежать утечек памяти
-        ConnectionData.OnUserAuthenticated -= OnUserAuthenticated;
-        Debug.Log("UnSub");
+        ConnectionData.OnUserAuthenticated -= OnUserAuthenticated;     
     }
 
 

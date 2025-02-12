@@ -19,9 +19,14 @@ public class UISC : MonoBehaviour
             Tween.Scale(icons[int.Parse(selector.name)].transform, endValue: 1f, duration: 0.4f, endDelay: 0.1f);
             Tween.PositionX(selector.transform, icons[i].transform.position.x, 0.25f);
             Tween.Scale(icons[i].transform, endValue: 1.25f, duration:0.4f, endDelay: 0.1f);
-            //windows
-            //Tween
             selector.name = i.ToString();
+        //windows
+            foreach(GameObject go in windows)
+            {
+                go.SetActive(false);
+            }
+            windows[i].SetActive(true);
+
     }
     public void but_ViewDetails(GameObject i)
     {

@@ -11,7 +11,7 @@ public class UISC : MonoBehaviour
     [SerializeField] GameObject[] windows = new GameObject[5];
     [SerializeField] GameObject details;
     [SerializeField] GameObject selector;
-    //[SerializeField] Dictionary<string, GameObject> icons = new Dictionary<string, GameObject>();
+    [SerializeField] GameObject popupEnter;
 
     private void Start()
     {   
@@ -46,5 +46,12 @@ public class UISC : MonoBehaviour
                 .Group(Tween.Color(i.transform.Find("poster/img").GetComponent<Image>(), Color.white, 0.2f))
                 .ChainCallback(() => details.SetActive(true))
                 .ChainCallback(() => activate_Window(0));
+    }
+    public void show_popupEnter()
+    {
+        Sequence.Create(cycles: 1)
+            .Group(Tween.Scale(popupEnter.transform, 0.0f, 0.01f))
+            .ChainCallback(() => popupEnter.SetActive(true))
+            .Chain(Tween.Scale(popupEnter.transform, 1f, 0.4f));
     }
 }

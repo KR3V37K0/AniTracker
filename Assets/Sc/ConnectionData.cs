@@ -31,6 +31,10 @@ public class ConnectionData:MonoBehaviour
 
     public static void Succes()
     {
+        TOKEN.access_token = PlayerPrefs.GetString("access_token");
+        TOKEN.refresh_token = PlayerPrefs.GetString("refresh_token");
+        
+        PlayerPrefs.Save();
         OnUserAuthenticated?.Invoke();
     }
 }

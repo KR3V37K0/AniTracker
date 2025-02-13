@@ -8,10 +8,7 @@ using Newtonsoft.Json.Linq;
 
 public class API : MonoBehaviour
 {
-    [SerializeField] UISC ui;
     private string apiUrl = "https://shikimori.one/api/graphql";
-    public GameObject test;
-    string json;
 
     void Start()
     {
@@ -48,7 +45,6 @@ public class API : MonoBehaviour
 
             if(request.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log("? Успешный запрос!");
                 string jsonResponse = request.downloadHandler.text;
                 AnimeResponse response = JsonConvert.DeserializeObject<AnimeResponse>(jsonResponse);
 
@@ -56,11 +52,12 @@ public class API : MonoBehaviour
                 {
                     foreach (Anime anime in response.data.animes)
                     {
+                        /*
                         Debug.Log($"Название: {anime.name}");
                         Debug.Log($"Русское название: {anime.russian}");
                         Debug.Log($"ID: {anime.id}");
-                        Debug.Log($"Постер: {anime.poster.originalUrl}");
-                        StartCoroutine(DownloadImage(anime.poster.originalUrl, test));
+                        Debug.Log($"Постер: {anime.poster.originalUrl}");   
+                        */
                     }
                 }
                 else

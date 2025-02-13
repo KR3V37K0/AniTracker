@@ -2,28 +2,62 @@ using UnityEngine;
 using System;
 using UnityEngine.Networking;
 using System.Collections;
-using JetBrains.Annotations;
 
 public class DeepLinkHandler : MonoBehaviour
 {
-    private static string deepLinkURL; // Храним ссылку для обработки в Unity
+    [SerializeField] ManagerSC manager;
+    private static string deepLinkURL;
 
     void Start()
     {
-        
         Application.deepLinkActivated += OnDeepLinkActivated;
 
-        if (!string.IsNullOrEmpty(Application.absoluteURL))
+        if (PlayerPrefs.HasKey("access_token") && PlayerPrefs.HasKey("token_expiry"))
         {
-            OnDeepLinkActivated(Application.absoluteURL);
+            float expiryTime = float.Parse(PlayerPrefs.GetString("token_expiry"));
+
+            if (Time.time < expiryTime)
+            {
+                // ? Токен еще действителен
+                ConnectionData.TOKEN.access_token = PlayerPrefs.GetString("access_token");
+                Debug.Log("? Используем сохраненный токен.");
+                ConnectionData.Succes();
+                return;
+            }
+            else
+            {
+                // ?? Токен истек, пробуем обновить
+                StartCoroutine(RefreshToken());
+                return;
+            }
         }
+
+        // Проверяем, был ли пользователь уведомлен об авторизации
+        if (PlayerPrefs.GetInt("authorization_shown", 0) == 0)
+        {
+            PanelAuthorize();
+        }
+    }
+
+    void PanelAuthorize()
+    {
+        Debug.Log("?? Предлагаем пользователю авторизоваться.");
+        PlayerPrefs.SetInt("authorization_shown", 1); // Запоминаем, что предлагали
+        PlayerPrefs.Save();
+
+        manager.ui.show_popupEnter();
+    }
+
+    public void StartAuthorization()
+    {
+        Debug.Log("?? Открываем браузер для авторизации.");
         Application.OpenURL(ConnectionData.URL_ANDROID);
     }
 
     void OnDeepLinkActivated(string url)
     {
         Debug.Log("?? Deep Link Activated: " + url);
-        deepLinkURL = url; // Сохраняем ссылку для обработки в Update()
+        deepLinkURL = url;
     }
 
     void Update()
@@ -35,13 +69,12 @@ public class DeepLinkHandler : MonoBehaviour
             if (!string.IsNullOrEmpty(code))
             {
                 Debug.Log("? Получен OAuth2 код: " + code);
-                deepLinkURL = null; // Сбрасываем ссылку после обработки
+                deepLinkURL = null;
                 StartCoroutine(GetAccessToken(code));
             }
         }
     }
 
-    // Метод для парсинга параметров из URL (замена System.Web)
     private string GetQueryParameter(string url, string paramName)
     {
         Uri uri = new Uri(url);
@@ -52,7 +85,7 @@ public class DeepLinkHandler : MonoBehaviour
             string[] keyValue = param.Split('=');
             if (keyValue.Length == 2 && keyValue[0] == paramName)
             {
-                return Uri.UnescapeDataString(keyValue[1]); // Декодируем строку
+                return Uri.UnescapeDataString(keyValue[1]);
             }
         }
         return null;
@@ -62,21 +95,15 @@ public class DeepLinkHandler : MonoBehaviour
     {
         string url = "https://shikimori.one/oauth/token";
 
-        // Формируем запрос в правильном формате
-        string postData = $"grant_type=authorization_code" +
-                          $"&client_id={ConnectionData.CLIENT_ID}" +
-                          $"&client_secret={ConnectionData.CLIENT_SECRET}" +
-                          $"&code={authorizationCode}" +
-                          $"&redirect_uri={ConnectionData.CALLBACK_ANDROID}";
+        WWWForm form = new WWWForm();
+        form.AddField("grant_type", "authorization_code");
+        form.AddField("client_id", ConnectionData.CLIENT_ID);
+        form.AddField("client_secret", ConnectionData.CLIENT_SECRET);
+        form.AddField("code", authorizationCode);
+        form.AddField("redirect_uri", ConnectionData.CALLBACK_ANDROID);
 
-        byte[] postDataBytes = System.Text.Encoding.UTF8.GetBytes(postData);
-
-        using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
+        using (UnityWebRequest request = UnityWebRequest.Post(url, form))
         {
-            request.uploadHandler = new UploadHandlerRaw(postDataBytes);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
             yield return request.SendWebRequest();
 
             if (request.result == UnityWebRequest.Result.Success)
@@ -89,8 +116,6 @@ public class DeepLinkHandler : MonoBehaviour
                 PlayerPrefs.SetString("token_expiry", (Time.time + ConnectionData.TOKEN.expires_in).ToString());
 
                 Debug.Log("? Access Token получен!");
-                good.SetActive(true);
-                ConnectionData.code = authorizationCode;              
                 ConnectionData.Succes();
             }
             else
@@ -100,5 +125,47 @@ public class DeepLinkHandler : MonoBehaviour
             }
         }
     }
-    public GameObject good;
+
+    IEnumerator RefreshToken()
+    {
+        string refreshToken = PlayerPrefs.GetString("refresh_token");
+
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            Debug.Log("? Нет refresh_token, требуется повторная авторизация.");
+            PanelAuthorize();
+            yield break;
+        }
+
+        string url = "https://shikimori.one/oauth/token";
+        WWWForm form = new WWWForm();
+        form.AddField("grant_type", "refresh_token");
+        form.AddField("client_id", ConnectionData.CLIENT_ID);
+        form.AddField("client_secret", ConnectionData.CLIENT_SECRET);
+        form.AddField("refresh_token", refreshToken);
+
+        using (UnityWebRequest request = UnityWebRequest.Post(url, form))
+        {
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                string json = request.downloadHandler.text;
+                ConnectionData.TOKEN = JsonUtility.FromJson<ConnectionData.TokenResponse>(json);
+
+                PlayerPrefs.SetString("access_token", ConnectionData.TOKEN.access_token);
+                PlayerPrefs.SetString("refresh_token", ConnectionData.TOKEN.refresh_token);
+                PlayerPrefs.SetString("token_expiry", (Time.time + ConnectionData.TOKEN.expires_in).ToString());
+
+                Debug.Log("? Токен успешно обновлен.");
+                ConnectionData.Succes();
+            }
+            else
+            {
+                Debug.Log("? Ошибка обновления токена, требуется повторная аутентификация.");
+                PanelAuthorize();
+            }
+        }
+    }
 }
+

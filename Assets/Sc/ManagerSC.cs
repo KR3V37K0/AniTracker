@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.UI;
 using UnityEngine;
 
 public class ManagerSC : MonoBehaviour
@@ -12,7 +13,7 @@ public class ManagerSC : MonoBehaviour
     public DeepLinkHandler androidServer;
     void Start()
     {
-
+        StartCoroutine(api.GetOngoingAnime());
     }
     void Update()
     {

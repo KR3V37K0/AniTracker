@@ -5,21 +5,23 @@ using UnityEngine.Networking;
 using Newtonsoft.Json;
 using UnityEngine.UI;
 using Newtonsoft.Json.Linq;
+using System;
 
 public class API : MonoBehaviour
 {
+    ManagerSC manager;
     private string apiUrl = "https://shikimori.one/api/graphql";
 
     void Start()
     {
-        StartCoroutine(GetOngoingAnime());
+        manager=gameObject.transform.GetComponent<ManagerSC>();
     }
 
-    IEnumerator GetOngoingAnime()
+    public IEnumerator GetOngoingAnime()
     {
         string query = @"
         query {
-            animes(status: ""ongoing"", limit: 2, order: ranked) {
+            animes(status: ""ongoing"", limit: 4, order: ranked) {
                 id
                 name
                 russian       
@@ -50,14 +52,21 @@ public class API : MonoBehaviour
 
                 if (response?.data?.animes != null)
                 {
+                    int n = 0;
                     foreach (Anime anime in response.data.animes)
                     {
+                        int localIndex = n;
                         /*
                         Debug.Log($"Название: {anime.name}");
                         Debug.Log($"Русское название: {anime.russian}");
                         Debug.Log($"ID: {anime.id}");
                         Debug.Log($"Постер: {anime.poster.originalUrl}");   
                         */
+                        Debug.Log("...." + n + " " + anime.russian);
+                        StartCoroutine(DownloadImage(anime.poster.originalUrl, sprite 
+                            =>StartCoroutine( manager.ui.Anime_to_Home(anime.id, anime.name, anime.russian, sprite,localIndex))));
+                        n++;
+                        
                     }
                 }
                 else
@@ -73,6 +82,7 @@ public class API : MonoBehaviour
         }
     
     }
+    [System.Serializable]
     public class AnimeImage
     {
         public string originalUrl;
@@ -87,7 +97,7 @@ public class API : MonoBehaviour
         public AnimeImage poster;
     }
 
-    IEnumerator DownloadImage(string url,GameObject obj)
+    IEnumerator DownloadImage(string url,Action<Sprite> callback)
     {
         //url = "https://shikimori.one" + url;
         using (UnityWebRequest request = UnityWebRequest.Get(url))
@@ -98,8 +108,10 @@ public class API : MonoBehaviour
             if (request.result == UnityWebRequest.Result.Success)
             {
                 
-                Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;            
-                obj.transform.GetComponent<Image>().sprite = SpriteFromTexture(texture); // Преобразуем в Sprite и вставляем в Image
+                Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
+                Sprite sprite = SpriteFromTexture(texture);
+                callback(sprite);
+                //obj.transform.GetComponent<Image>().sprite = SpriteFromTexture(texture); // Преобразуем в Sprite и вставляем в Image
             }
             else
             {

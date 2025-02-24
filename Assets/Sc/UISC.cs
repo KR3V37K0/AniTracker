@@ -7,20 +7,42 @@ using TMPro;
 
 public class UISC : MonoBehaviour
 {
-        ManagerSC manager;
-    [Header("----NAVIGATION----")]
-        [SerializeField] GameObject[]icons=new GameObject[6];
-        [SerializeField] GameObject[] windows = new GameObject[6];
-        [SerializeField] GameObject details;
-        [SerializeField] GameObject selector;
-        [SerializeField] GameObject popupEnter;
-        int active;
-    [Header("---HOME--")]
-        public string onHome;
-        [SerializeField] Transform home_slot;
-        [SerializeField] GameObject panelAnime;
+    ManagerSC manager;
+
+[Header("----NAVIGATION----")]
+    [SerializeField] GameObject[]icons=new GameObject[6];
+    [SerializeField] GameObject[] windows = new GameObject[6];
+    [SerializeField] GameObject details;
+    [SerializeField] GameObject selector;
+    [SerializeField] GameObject popupEnter;
+    int active;
+
+[Header("---HOME--")]
+    public string onHome;
+    [SerializeField] Transform home_slot;
+    [SerializeField] GameObject panelAnime;
+
+[Header("---DETAILS--")]
+    [SerializeField] TMP_Text txt_name;
+    [SerializeField] TMP_Text txt_nameEng;
+    [SerializeField] Image img_poster;
+    [SerializeField] TMP_Text txt_type;
+    [SerializeField] TMP_Text txt_series;
+    [SerializeField] TMP_Text txt_status;
+    [SerializeField] TMP_Text txt_genres;
+    [SerializeField] TMP_Text txt_themes;
+    [SerializeField] TMP_Text txt_age;
+    [SerializeField] Image img_stars;
+    [SerializeField] TMP_Text txt_stars;
+    [SerializeField] Transform arr_studios;
+    [SerializeField] TMP_Text txt_description;
+    [SerializeField] Transform arr_authors;
+    [SerializeField] Transform arr_screens;
+    [SerializeField] Transform arr_related;
+    [SerializeField] Transform arr_similar;
+
     [Header("---SETTINGS--")]
-        [SerializeField] Button btn_Enter;
+    [SerializeField] Button btn_Enter;
 
 
     private void Start()
@@ -92,7 +114,7 @@ public class UISC : MonoBehaviour
         }
         windows[i].SetActive(true);
     }
-    public void but_ViewDetails(GameObject i)
+    public void but_ViewDetails(GameObject i,Anime anime)
     {
         //animation
         Sequence.Create(cycles: 1)
@@ -103,8 +125,10 @@ public class UISC : MonoBehaviour
             .ChainCallback(() => details.SetActive(true))
             .ChainCallback(()=>active=5)
             .ChainCallback(() => activate_Window(0));
+
+        StartCoroutine(manager.api.getDetails(anime));
             
-                
+        
     }
     public void show_popupEnter()
     {
@@ -113,14 +137,67 @@ public class UISC : MonoBehaviour
             .ChainCallback(() => popupEnter.SetActive(true))
             .Chain(Tween.Scale(popupEnter.transform, 1f, 0.3f));
     }
-    public IEnumerator Anime_to_Home(string id,string name,string russian,Sprite sprite,int number)
+    public IEnumerator Anime_to_Home(Anime Data,Sprite sprite,int number)
     {
+        Data.sprite = sprite;
+
         Transform anime = Instantiate(panelAnime.transform, home_slot);
+        anime.name = number+":"+Data.id;
         anime.transform.Find("poster/img").GetComponent<Image>().sprite=sprite;
-        anime.transform.Find("txt").GetComponent<TMP_Text>().text = russian;
+        anime.transform.Find("txt").GetComponent<TMP_Text>().text = Data.russian;
+        anime.GetComponent<Button>().onClick.AddListener(() => but_ViewDetails(anime.gameObject,Data));
         anime.SetSiblingIndex(number);
-        Debug.Log(number+" "+russian);
-        yield return null;
-        
+        sort_children(home_slot);
+        yield return null;   
+    }
+    private void sort_children(Transform parent)
+    {
+        foreach (Transform child in parent)
+        {
+            child.SetSiblingIndex(fromName(child.gameObject.name,"state"));
+        }
+    }
+    private int fromName(string me,string what)
+    {
+        string[] words = me.Split(':');
+        switch (what)
+        {
+            case ("state"):
+                return(int.Parse(words[0]));               
+
+            case ("id"):
+                return (int.Parse(words[1]));               
+        }
+        return -1;
+    }
+    public void ViewDetails(AnimeDetails details)
+    {
+        txt_name.text = details.main.russian;
+        txt_nameEng.text = details.main.name;
+        img_poster.sprite=details.main.sprite;
+        txt_type.text = details.kind;
+        txt_series.text=details.episodesAired+" / ";
+        if (details.episodes == 0) txt_series.text += "??";
+        else txt_series.text += details.episodes;
+
+        txt_genres.text = "";
+        txt_themes.text = "";
+        foreach(Genre g in details.genres)
+        {
+            if (g.kind == "genre") txt_genres.text += g.russian + "   ";
+            else if (g.kind == "theme") txt_themes.text += g.russian + "   ";
+        }
+
+        txt_age.text = details.rating;
+        img_stars.fillAmount = (float)details.score / 10f;
+        txt_stars.text = details.score+"";
+        //STUDIOS
+        txt_description.text = details.description;
+        if (details.description == null) txt_description.text = "нет описания";
+        txt_description.gameObject.transform.position = txt_description.gameObject.transform.position + new Vector3(0, 0, 0);
+        //PERSON
+        //SCREENS
+        //RELATES
+        //SIMILAR
     }
 }

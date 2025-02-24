@@ -6,14 +6,17 @@ using Newtonsoft.Json;
 using UnityEngine.UI;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 public class API : MonoBehaviour
 {
     ManagerSC manager;
-    private string apiUrl = "https://shikimori.one/api/graphql";
+    private string QL = "https://shikimori.one/api/graphql";
 
     void Start()
     {
+       
         manager=gameObject.transform.GetComponent<ManagerSC>();
     }
 
@@ -21,7 +24,7 @@ public class API : MonoBehaviour
     {
         string query = @"
         query {
-            animes(status: ""ongoing"", limit: 4, order: ranked) {
+            animes(status: ""ongoing"", limit: 15, order: ranked) {
                 id
                 name
                 russian       
@@ -35,7 +38,7 @@ public class API : MonoBehaviour
 
         string jsonRequestStr = jsonRequest.ToString();
 
-        using (UnityWebRequest request = new UnityWebRequest(apiUrl, "POST"))
+        using (UnityWebRequest request = new UnityWebRequest(QL, "POST"))
         {
             byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonRequestStr);
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -64,7 +67,7 @@ public class API : MonoBehaviour
                         */
                         Debug.Log("...." + n + " " + anime.russian);
                         StartCoroutine(DownloadImage(anime.poster.originalUrl, sprite 
-                            =>StartCoroutine( manager.ui.Anime_to_Home(anime.id, anime.name, anime.russian, sprite,localIndex))));
+                            =>StartCoroutine( manager.ui.Anime_to_Home(anime, sprite,localIndex))));
                         n++;
                         
                     }
@@ -82,21 +85,117 @@ public class API : MonoBehaviour
         }
     
     }
-    [System.Serializable]
-    public class AnimeImage
+    public async Task<string> ToAPIAsync(string query)
     {
-        public string originalUrl;
-    }
+        var jsonRequest = new JObject
+        {
+            ["query"] = query
+        };
 
-    [System.Serializable]
-    public class Anime
+        string jsonRequestStr = jsonRequest.ToString();
+
+        using (UnityWebRequest request = new UnityWebRequest(QL, "POST"))
+        {
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonRequestStr);
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("User-Agent", "AniTracker");
+
+            var operation = request.SendWebRequest();
+
+            while (!operation.isDone)
+            {
+                await Task.Yield(); // Ждем завершения запроса
+            }
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                string jsonResponse = request.downloadHandler.text;
+                Debug.Log(jsonResponse);
+                return jsonResponse;
+            }
+            else
+            {
+                Debug.LogError("Ошибка запроса: " + request.error);
+                throw new System.Exception("Ошибка запроса: " + request.error);
+            }
+        }
+    }
+    public IEnumerator getDetails(Anime main)
     {
-        public string id;
-        public string name;
-        public string russian;
-        public AnimeImage poster;
-    }
+        //AnimeDetails details = new AnimeDetails();
+        //details.mainData = main;
 
+        string query = $@"
+        query {{
+            animes(ids:""{main.id}"") 
+            {{
+                kind
+                episodes
+                episodesAired
+                status
+                genres {{ id name russian kind }}
+                rating
+                score
+                studios {{ id name imageUrl }}
+                description
+                personRoles {{
+                  id
+                  rolesRu
+                  person {{ id name poster {{ id }} }}
+                }}
+                screenshots {{ originalUrl }}
+                related {{
+                      anime {{
+                        id
+                        name
+                      }}
+                      relationText
+                    }}
+            }}
+         }}";
+        Task<string> apiTask = ToAPIAsync(query);
+        while (!apiTask.IsCompleted)
+        {
+            yield return null; // Ждем завершения задачи
+        }
+        if (apiTask.IsFaulted)
+        {
+            Debug.LogError("Ошибка: " + apiTask.Exception.Message);
+        }
+        else
+        {
+            detailResponse response = JsonConvert.DeserializeObject<detailResponse>(apiTask.Result);
+            AnimeDetails details = response.data.animes[0];
+            details.main = main;
+            //Debug.Log(d_details.data.animes[0].related[0].anime.name);
+            foreach(Studio s in details.studios)
+                StartCoroutine(DownloadImage(s.imageUrl,
+                    (sprite) => s.sprite=sprite));
+            foreach (Screenshot s in details.screenshots)
+                StartCoroutine(DownloadImage(s.originalUrl,
+                    (sprite) => s.sprite = sprite));
+
+// ДОБАВИТЬ ПОСТЕРЫ ЛЮДЕЙ
+// ДОБАВИТЬ ДОП ИНФУ О СВЯЗАННЫХ
+// ДОБАВИТЬ СВЯЗАННЫЕ
+            manager.ui.ViewDetails(details);
+        }
+        yield return null;
+    }
+    private async Task<string> GetSimilar(int animeId)
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            // Устанавливаем заголовок User-Agent (обязательно для Shikimori API)
+            client.DefaultRequestHeaders.Add("User-Agent", "YourAppName");
+
+            // Отправляем GET-запрос
+            HttpResponseMessage response = await client.GetAsync($"https://shikimori.one/api/animes/{animeId}/similar");
+            return await response.Content.ReadAsStringAsync();
+        }
+    }
     IEnumerator DownloadImage(string url,Action<Sprite> callback)
     {
         //url = "https://shikimori.one" + url;
@@ -106,16 +205,14 @@ public class API : MonoBehaviour
             yield return request.SendWebRequest();
 
             if (request.result == UnityWebRequest.Result.Success)
-            {
-                
+            {               
                 Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
                 Sprite sprite = SpriteFromTexture(texture);
-                callback(sprite);
-                //obj.transform.GetComponent<Image>().sprite = SpriteFromTexture(texture); // Преобразуем в Sprite и вставляем в Image
+                callback(sprite);             
             }
             else
             {
-                Debug.LogError("Ошибка загрузки постера: " + request.error);
+                Debug.LogError("Ошибка загрузки постера: " + request.error+" "+url);
             }
         }
     }
@@ -133,3 +230,4 @@ public class API : MonoBehaviour
         public AnimeDataWrapper data;
     }
 }
+

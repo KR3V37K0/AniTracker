@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 8293c338c4a04f04a9472d6b9f6c950a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: cf3de275b468307449a70139a914015c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -240,8 +240,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Naruto / \u041D\u0430\u0440\u0443\u0442\u043E / \u0435\u0449\u0435 \u0431\u0443\u043A\u0432\u044B
-    \u043F\u0440\u043E\u0441\u0442\u043E \u0442\u0430\u043A \u043A\u0430\u043A \u0442\u0430\u043A"
+  m_text: "\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 605dab1ece3f0db4aa82af1910c43b2b, type: 2}
   m_sharedMaterial: {fileID: 605271228917751550, guid: 605dab1ece3f0db4aa82af1910c43b2b, type: 2}

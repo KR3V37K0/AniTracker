@@ -4,15 +4,20 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
 using UnityEngine.UI;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using UnityEditor.Search;
 
 public class API : MonoBehaviour
 {
     ManagerSC manager;
     private string QL = "https://shikimori.one/api/graphql";
+    private string Similar = "https://shikimori.one/api/animes/id/similar";
+    private string url_Images = "https://shikimori.one";
+    private const int BatchSize = 19;
 
     void Start()
     {
@@ -65,7 +70,7 @@ public class API : MonoBehaviour
                         Debug.Log($"ID: {anime.id}");
                         Debug.Log($"Постер: {anime.poster.originalUrl}");   
                         */
-                        Debug.Log("...." + n + " " + anime.russian);
+                        //Debug.Log("...." + n + " " + anime.russian);
                         StartCoroutine(DownloadImage(anime.poster.originalUrl, sprite 
                             =>StartCoroutine( manager.ui.Anime_to_Home(anime, sprite,localIndex))));
                         n++;
@@ -85,7 +90,7 @@ public class API : MonoBehaviour
         }
     
     }
-    public async Task<string> ToAPIAsync(string query)
+    public async Task<string> ToAPIAsync(string query,string url)
     {
         var jsonRequest = new JObject
         {
@@ -94,7 +99,7 @@ public class API : MonoBehaviour
 
         string jsonRequestStr = jsonRequest.ToString();
 
-        using (UnityWebRequest request = new UnityWebRequest(QL, "POST"))
+        using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
         {
             byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonRequestStr);
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -112,7 +117,6 @@ public class API : MonoBehaviour
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string jsonResponse = request.downloadHandler.text;
-                Debug.Log(jsonResponse);
                 return jsonResponse;
             }
             else
@@ -135,6 +139,7 @@ public class API : MonoBehaviour
                 episodes
                 episodesAired
                 status
+                airedOn {{ year month day date }}
                 genres {{ id name russian kind }}
                 rating
                 score
@@ -143,7 +148,7 @@ public class API : MonoBehaviour
                 personRoles {{
                   id
                   rolesRu
-                  person {{ id name poster {{ id }} }}
+                  person {{ id name poster {{ id originalUrl }} }}
                 }}
                 screenshots {{ originalUrl }}
                 related {{
@@ -155,7 +160,7 @@ public class API : MonoBehaviour
                     }}
             }}
          }}";
-        Task<string> apiTask = ToAPIAsync(query);
+        Task<string> apiTask = ToAPIAsync(query,QL);
         while (!apiTask.IsCompleted)
         {
             yield return null; // Ждем завершения задачи
@@ -173,46 +178,135 @@ public class API : MonoBehaviour
             foreach(Studio s in details.studios)
                 StartCoroutine(DownloadImage(s.imageUrl,
                     (sprite) => s.sprite=sprite));
+            details.screenshots=details.screenshots.OrderBy(x => Guid.NewGuid()).ToList();
             foreach (Screenshot s in details.screenshots)
                 StartCoroutine(DownloadImage(s.originalUrl,
                     (sprite) => s.sprite = sprite));
+            foreach (PersonRole p in details.personRoles)
+            {
+                if (p.person.poster != null)
+                {
+                    StartCoroutine(DownloadImage(p.person.poster.originalUrl,
+                        (sprite) => p.person.poster.sprite = sprite));
+                }
+            }
 
-// ДОБАВИТЬ ПОСТЕРЫ ЛЮДЕЙ
-// ДОБАВИТЬ ДОП ИНФУ О СВЯЗАННЫХ
-// ДОБАВИТЬ СВЯЗАННЫЕ
+            // ДОБАВИТЬ ДОП ИНФУ О СВЯЗАННЫХ
+            List<string> a = new List<string>();
+            foreach (Related r in details.related)
+            {                        
+                if (r.anime != null)
+                {
+                    a.Add(r.anime.id);
+                }
+            }
+            yield return StartCoroutine(Get_BIGminiAnime(a, (o) =>
+            {
+                for (int i = details.related.Count - 1; i >= 0; i--)
+                {
+                    if (details.related[i].anime == null)
+                    {
+                        details.related.RemoveAt(i);
+                    }
+                }
+                for (int i = 0; i < details.related.Count; i++)
+                {
+                    foreach (Anime ani in o)
+                    {
+                        if (details.related[i].anime.id == ani.id)
+                        {
+                            details.related[i].anime = ani;
+                        }
+                    }
+                }
+            }));
+            foreach (Related r in details.related)
+            {
+                if (r.anime != null)
+                {
+                    yield return StartCoroutine(DownloadImage(r.anime.poster.originalUrl, (sprite) => r.anime.sprite = sprite));
+                }
+            }
+
+            // ДОБАВИТЬ ПОХОЖИЕ
+            /*Task<List<SimilarAnime>> SimTask = GetSimilar(details.main.id);
+            while (!SimTask.IsCompleted)
+            {
+                yield return null;
+            }
+            if (SimTask.Result != null)
+            {
+                a = new List<string>();
+                foreach (SimilarAnime s in SimTask.Result)
+                {
+                    if (s != null)
+                    {
+                        a.Add(s.id);
+                    }
+                }
+                StartCoroutine(Get_BIGminiAnime(a,
+                    (o) =>
+                    {
+                        for (int i = 0; i < o.Count; i++)
+                        {
+                            details.similar[i] = o[i];
+                        }
+                        foreach (Anime r in details.similar)
+                        {
+                            StartCoroutine(DownloadImage(r.poster.originalUrl,
+                                (sprite) => r.sprite = sprite));
+                        }
+                    }));
+            }*/
+
             manager.ui.ViewDetails(details);
         }
         yield return null;
     }
-    private async Task<string> GetSimilar(int animeId)
+    private async Task<List<SimilarAnime>> GetSimilar(string animeId)
     {
         using (HttpClient client = new HttpClient())
         {
             // Устанавливаем заголовок User-Agent (обязательно для Shikimori API)
-            client.DefaultRequestHeaders.Add("User-Agent", "YourAppName");
+            client.DefaultRequestHeaders.Add("User-Agent", "AniTracker");
 
             // Отправляем GET-запрос
             HttpResponseMessage response = await client.GetAsync($"https://shikimori.one/api/animes/{animeId}/similar");
-            return await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Читаем JSON-ответ
+                string jsonResponse = await response.Content.ReadAsStringAsync(); 
+                Debug.Log(jsonResponse);
+                return JsonConvert.DeserializeObject<List<SimilarAnime>>(jsonResponse);
+            }
+            else
+            {
+                // Обработка ошибок
+                throw new Exception($"Ошибка запроса: {response.StatusCode} - {response.ReasonPhrase}");
+            }
         }
     }
     IEnumerator DownloadImage(string url,Action<Sprite> callback)
     {
-        //url = "https://shikimori.one" + url;
-        using (UnityWebRequest request = UnityWebRequest.Get(url))
+        
+        if (url != null)
         {
-            request.downloadHandler = new DownloadHandlerTexture(true); // Автоматически создает Texture2D
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
-            {               
-                Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
-                Sprite sprite = SpriteFromTexture(texture);
-                callback(sprite);             
-            }
-            else
+            using (UnityWebRequest request = UnityWebRequest.Get(url))
             {
-                Debug.LogError("Ошибка загрузки постера: " + request.error+" "+url);
+                request.downloadHandler = new DownloadHandlerTexture(true); // Автоматически создает Texture2D
+                yield return request.SendWebRequest();
+
+                if (request.result == UnityWebRequest.Result.Success)
+                {
+                    Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
+                    Sprite sprite = SpriteFromTexture(texture);
+                    callback(sprite);
+                }
+                else
+                {
+                    Debug.LogError("Ошибка загрузки постера: " + request.error + " " + url);
+                }
             }
         }
     }
@@ -224,10 +318,112 @@ public class API : MonoBehaviour
     {
         public List<Anime> animes;
     }
-
     public class AnimeResponse
     {
         public AnimeDataWrapper data;
+    }
+    public class AnimeDataWrapperAlias
+    {
+        public Dictionary<string, List<Anime>> animes;
+    }
+    public class AnimeResponseAlias
+    {
+        public Dictionary<string, AnimeDataWrapper> data;
+    }
+    IEnumerator Get_miniAnime(string id, Action<Anime> callback)
+    {
+        string query = $@"
+        query {{
+            animes(ids:""{id}"") 
+            {{  
+                id
+                name
+                russian       
+                poster {{ originalUrl }}
+            }}
+         }}";
+        Task<string> apiTask = ToAPIAsync(query,QL);
+        while (!apiTask.IsCompleted)
+        {
+            yield return null; 
+        }
+        AnimeResponse response = JsonConvert.DeserializeObject<AnimeResponse>(apiTask.Result);
+        callback(response.data.animes[0]);       
+    }
+    public IEnumerator Get_BIGminiAnime(List<string> id, Action<List<Anime>> callback)
+    {
+        List<Anime> allAnimes = new List<Anime>(); // Общий список для всех аниме
+
+        // Разбиваем список ID на пакеты
+        for (int i = 0; i < id.Count; i += BatchSize)
+        {
+            // Получаем текущий пакет ID
+            List<string> batchIds = id.GetRange(i, Mathf.Min(BatchSize, id.Count - i));
+
+            // Формируем запрос для текущего пакета
+            string query = FormQuery(batchIds);
+
+            // Отправляем запрос
+            Task<string> apiTask = ToAPIAsync(query, QL);
+            Debug.Log("wait:  " + i);
+            while (!apiTask.IsCompleted)
+            {
+                yield return null;
+            }
+
+            // Обрабатываем ответ
+            if (apiTask.IsFaulted)
+            {
+                Debug.LogError("Ошибка при выполнении запроса: " + apiTask.Exception);
+                yield break;
+            }
+
+            // Десериализуем ответ и добавляем аниме в общий список
+            List<Anime> batchAnimes = ParseResponse(apiTask.Result);
+            allAnimes.AddRange(batchAnimes);
+        }
+
+        // Возвращаем полный список через callback
+        callback(allAnimes);
+    }
+
+    private string FormQuery(List<string> ids)
+    {
+        int count = 0;
+        string query = "query {";
+        foreach (string id in ids)
+        {
+            query += $@"
+            AnImE{count}: animes(ids: ""{id}"") {{
+                id
+                name
+                russian       
+                poster {{ originalUrl }}
+            }}";
+            count++;
+        }
+        query += "}";
+        return query;
+    }
+
+    private List<Anime> ParseResponse(string jsonResponse)
+    {
+        List<Anime> animes = new List<Anime>();
+
+        JObject root = JObject.Parse(jsonResponse);
+        JObject data = (JObject)root["data"];
+
+        foreach (var entry in data)
+        {
+            string key = entry.Key.ToLower(); // Делаем ключи предсказуемыми ("anime0", "anime1", ...)
+            if (key.StartsWith("anime")) // Проверяем, что это нужный ключ
+            {
+                List<Anime> animeList = JsonConvert.DeserializeObject<List<Anime>>(entry.Value.ToString());
+                animes.AddRange(animeList);
+            }
+        }
+
+        return animes;
     }
 }
 

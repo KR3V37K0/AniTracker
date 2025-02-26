@@ -35,6 +35,7 @@ public class ManagerSC : MonoBehaviour
 public class AnimeImage
 {
     public string originalUrl;
+    public string original;
 }
 public class Anime
 {
@@ -42,6 +43,14 @@ public class Anime
     public string name;
     public string russian;
     public AnimeImage poster;
+    public Sprite sprite;
+}
+public class SimilarAnime
+{
+    public string id;
+    public string name;
+    public string russian;
+    public AnimeImage image;
     public Sprite sprite;
 }
 public class detailResponse
@@ -59,6 +68,7 @@ public class AnimeDetails
     public int episodes { get; set; }
     public int episodesAired { get; set; }
     public string status { get; set; }
+    public A_Date airedOn;
     public List<Genre> genres { get; set; }
     public string rating { get; set; }
     public double score { get; set; }
@@ -66,9 +76,16 @@ public class AnimeDetails
     public string description { get; set; }
     public List<PersonRole> personRoles { get; set; }
     public List<Screenshot> screenshots { get; set; }
-    public Related[] related;
-    public Anime[] similar;
+    public List<Related> related;
+    public List<Anime> similar;
 
+}
+public class A_Date
+{
+    public int year;
+    public int month;
+    public int day;
+    public string date;
 }
 public class Genre
 {
@@ -94,11 +111,13 @@ public class Person
 {
     public string id { get; set; }
     public string name { get; set; }
-    public Poster poster { get; set; }
+    public Poster poster { get; set; }    
 }
 public class Poster
 {
     public string id { get; set; }
+    public string originalUrl;
+    public Sprite sprite;
 }
 public class Related
 {
@@ -110,3 +129,4 @@ public class Screenshot
     public string originalUrl { get; set; }
     public Sprite sprite;
 }
+

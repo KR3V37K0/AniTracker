@@ -13,10 +13,10 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: KR3V37K0
-  productName: MOBILE2
+  productName: AniTracker
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
-  m_SplashScreenBackgroundColor: {r: 1, g: 1, b: 1, a: 1}
+  m_SplashScreenBackgroundColor: {r: 0.57564974, g: 0.8178723, b: 0.8301887, a: 1}
   m_ShowUnitySplashScreen: 1
   m_ShowUnitySplashLogo: 1
   m_SplashScreenOverlayOpacity: 1
@@ -141,7 +141,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 1.0
+  bundleVersion: 0.1
   preloadedAssets:
   - {fileID: 11400000, guid: 61ccc8832fee2ed49bc1a4e861f82e2b, type: 2}
   metroInputSource: 0

@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using UnityEditor.Search;
+using System.Text.RegularExpressions;
 
 public class API : MonoBehaviour
 {
@@ -175,7 +175,9 @@ public class API : MonoBehaviour
             AnimeDetails details = response.data.animes[0];
             details.main = main;
             //Debug.Log(d_details.data.animes[0].related[0].anime.name);
-            foreach(Studio s in details.studios)
+            //ÏÎ×ÈÑÒÈÒÜ ÎÏÈÑÀÍÈÅ
+            details.description = RemoveTextInBrackets(details.description);
+            foreach (Studio s in details.studios)
                 StartCoroutine(DownloadImage(s.imageUrl,
                     (sprite) => s.sprite=sprite));
             details.screenshots=details.screenshots.OrderBy(x => Guid.NewGuid()).ToList();
@@ -190,6 +192,7 @@ public class API : MonoBehaviour
                         (sprite) => p.person.poster.sprite = sprite));
                 }
             }
+            manager.ui.ViewDetails(details);
 
             // ÄÎÁÀÂÈÒÜ ÄÎÏ ÈÍÔÓ Î ÑÂßÇÀÍÍÛÕ
             List<string> a = new List<string>();
@@ -227,9 +230,10 @@ public class API : MonoBehaviour
                     yield return StartCoroutine(DownloadImage(r.anime.poster.originalUrl, (sprite) => r.anime.sprite = sprite));
                 }
             }
+            manager.ui.ViewDetails_Related(details);
 
             // ÄÎÁÀÂÈÒÜ ÏÎÕÎÆÈÅ
-            /*Task<List<SimilarAnime>> SimTask = GetSimilar(details.main.id);
+            Task<List<SimilarAnime>> SimTask = GetSimilar(details.main.id);
             while (!SimTask.IsCompleted)
             {
                 yield return null;
@@ -244,22 +248,24 @@ public class API : MonoBehaviour
                         a.Add(s.id);
                     }
                 }
-                StartCoroutine(Get_BIGminiAnime(a,
+                yield return StartCoroutine(Get_BIGminiAnime(a,
                     (o) =>
                     {
+                        details.similar = new List<Anime>();
                         for (int i = 0; i < o.Count; i++)
                         {
-                            details.similar[i] = o[i];
-                        }
-                        foreach (Anime r in details.similar)
-                        {
-                            StartCoroutine(DownloadImage(r.poster.originalUrl,
-                                (sprite) => r.sprite = sprite));
+                            details.similar.Add(o[i]);
                         }
                     }));
-            }*/
+                foreach (Anime r in details.similar)
+                {
+                    yield return StartCoroutine(DownloadImage(r.poster.originalUrl,
+                        (sprite) => r.sprite = sprite));
+                }
+                manager.ui.ViewDetails_Similar(details);
+            }
 
-            manager.ui.ViewDetails(details);
+
         }
         yield return null;
     }
@@ -277,7 +283,6 @@ public class API : MonoBehaviour
             {
                 // ×èòàåì JSON-îòâåò
                 string jsonResponse = await response.Content.ReadAsStringAsync(); 
-                Debug.Log(jsonResponse);
                 return JsonConvert.DeserializeObject<List<SimilarAnime>>(jsonResponse);
             }
             else
@@ -424,6 +429,14 @@ public class API : MonoBehaviour
         }
 
         return animes;
+    }
+    public static string RemoveTextInBrackets(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return input;
+
+        // Óäàëÿåì âñå ôğàãìåíòû òåêñòà â êâàäğàòíûõ ñêîáêàõ
+        return Regex.Replace(input, @"\[.*?\]", string.Empty);
     }
 }
 

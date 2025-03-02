@@ -292,6 +292,13 @@ public class UISC : MonoBehaviour
         }
 
         //RELATES
+
+
+        //SIMILAR
+
+    }
+    public void ViewDetails_Related(AnimeDetails details)
+    {
         DeleteChildren(arr_related);
         foreach (Related re in details.related)
         {
@@ -299,17 +306,21 @@ public class UISC : MonoBehaviour
             pan.transform.GetChild(0).GetChild(0).GetComponent<Image>().sprite = re.anime.sprite;
             pan.transform.GetChild(1).transform.GetComponent<TMP_Text>().text = re.relationText;
             pan.transform.GetChild(2).transform.GetComponent<TMP_Text>().text = re.anime.russian;
+            pan.GetComponent<Button>().onClick.AddListener(() => but_ViewDetails(pan.gameObject, re.anime));
         }
         ReloadContainer(arr_related.gameObject);
-
-        //SIMILAR
+    }
+    public void ViewDetails_Similar(AnimeDetails details)
+    {
         DeleteChildren(arr_similar);
-        /*foreach (Anime sim in details.similar)
+        Debug.Log(details.similar.Count);
+        foreach (Anime sim in details.similar)
         {
-            GameObject pan = Instantiate(obj_miniAnime,arr_similar);
-            pan.transform.Find("mask/img").GetComponent<Image>().sprite = sim.sprite;
+            GameObject pan = Instantiate(obj_miniAnime, arr_similar);
+            pan.transform.Find("poster/img").GetComponent<Image>().sprite = sim.sprite;
             pan.GetComponentInChildren<TMP_Text>().text = sim.russian;
-        }*/
+            pan.GetComponent<Button>().onClick.AddListener(() => but_ViewDetails(pan.gameObject, sim));
+        }
         ReloadContainer(arr_similar.gameObject);
     }
     IEnumerator waitImages(System.Func<Sprite> getSprite, Image slot)
@@ -362,5 +373,18 @@ public class UISC : MonoBehaviour
             ReloadContainer(container);
         }
             
+    }
+    public void anim_Rotate(Transform obj)
+    {
+        if (obj.name == "0")
+        {
+            obj.name = "1";
+            Tween.Rotation(obj, new Quaternion(0f, 0f, -90f, 0f), 0.6f);
+        }
+        else 
+        {
+            obj.name = "0";
+            Tween.Rotation(obj, new Quaternion(0f, 0f, 90f, 0f), 0.6f); 
+        }
     }
 }

@@ -59,7 +59,16 @@ public class detailResponse
 public class Data
 {
     public List<AnimeDetails> animes;
+    public List<GenreData> genres;
 }
+public class GenreData
+{
+    public string id;
+    public string kind;
+    public string name;
+    public string russian;
+}
+
 public class AnimeDetails
 {
     public Anime main;

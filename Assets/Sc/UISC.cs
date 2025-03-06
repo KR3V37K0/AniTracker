@@ -8,9 +8,12 @@ using TMPro;
 public class UISC : MonoBehaviour
 {
     ManagerSC manager;
-[Header("----NAVIGATION----")]
+[Header("----PAGES----")]
+    public UI_Search ui_search;
+[Header("----POPUPS----")]
     [SerializeField] GameObject popupEnter;
     [SerializeField] GameObject popupLoading;
+    [SerializeField] GameObject obj_Load;
 [Header("----NAVIGATION----")]
     [SerializeField] GameObject panel_Navigation;
     [SerializeField] GameObject[]icons=new GameObject[6];
@@ -186,6 +189,12 @@ public class UISC : MonoBehaviour
     public void ViewDetails(AnimeDetails details)
     {
         StopLoad();
+        //Loader on BIG Lists
+        DeleteChildren(arr_related);
+        DeleteChildren(arr_similar);
+        Instantiate(obj_Load,arr_related);
+        Instantiate(obj_Load, arr_similar);
+
         //List BUTT
         btn_Details_List.onClick.RemoveAllListeners();
         btn_Details_List.onClick.AddListener(() => butt_Anime_in_List(details.main.id));

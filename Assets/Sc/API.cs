@@ -438,5 +438,32 @@ public class API : MonoBehaviour
         // Удаляем все фрагменты текста в квадратных скобках
         return Regex.Replace(input, @"\[.*?\]", string.Empty);
     }
+    public async Task<List<GenreData>> Get_GenresList()
+    {
+        string query = @"
+        query {
+            genres(entryType: Anime) {
+                id
+                kind
+                name
+                russian
+            }
+        }";
+        Task<string> apiTask = ToAPIAsync(query, QL);
+        while (!apiTask.IsCompleted)
+        {
+            await Task.Yield();
+        }
+        if (apiTask.IsFaulted)
+        {
+            Debug.LogError("Ошибка: " + apiTask.Exception.Message);
+        }
+        else
+        {
+            detailResponse response = JsonConvert.DeserializeObject<detailResponse>(apiTask.Result);
+            return response.data.genres;
+        }
+        return null;
+    }
 }
 

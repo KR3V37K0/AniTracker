@@ -21,8 +21,19 @@ public class API : MonoBehaviour
 
     void Start()
     {
-       
         manager=gameObject.transform.GetComponent<ManagerSC>();
+    }
+
+    public void EnterToShiki()
+    {
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            manager.androidServer.StartAuthorization();
+        }
+        else if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor)
+        {
+            manager.winServer.StartAuthorization();
+        }
     }
 
     public IEnumerator GetOngoingAnime()
@@ -453,6 +464,7 @@ public class API : MonoBehaviour
         while (!apiTask.IsCompleted)
         {
             await Task.Yield();
+            
         }
         if (apiTask.IsFaulted)
         {

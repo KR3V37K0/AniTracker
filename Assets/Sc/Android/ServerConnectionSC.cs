@@ -45,7 +45,7 @@ public class DeepLinkHandler : MonoBehaviour
         PlayerPrefs.SetInt("authorization_shown", 1); // Запоминаем, что предлагали
         PlayerPrefs.Save();
 
-        manager.ui.show_popupEnter();
+        manager.ui_settings.show_popupEnter();
     }
 
     public void StartAuthorization()

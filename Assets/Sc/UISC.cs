@@ -11,7 +11,7 @@ public class UISC : MonoBehaviour
 [Header("----PAGES----")]
     public UI_Search ui_search;
 [Header("----POPUPS----")]
-    [SerializeField] GameObject popupEnter;
+
     [SerializeField] GameObject popupLoading;
     [SerializeField] GameObject obj_Load;
 [Header("----NAVIGATION----")]
@@ -146,13 +146,7 @@ public class UISC : MonoBehaviour
             
         
     }
-    public void show_popupEnter()
-    {
-        Sequence.Create(cycles: 1)
-            .Group(Tween.Scale(popupEnter.transform, 0.0f, 0.01f))
-            .ChainCallback(() => popupEnter.SetActive(true))
-            .Chain(Tween.Scale(popupEnter.transform, 1f, 0.3f));
-    }
+
     public IEnumerator Anime_to_Home(Anime Data,Sprite sprite,int number)
     {
         Data.sprite = sprite;

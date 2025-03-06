@@ -5,32 +5,19 @@ using UnityEngine;
 
 public class ManagerSC : MonoBehaviour
 {
+    public static ManagerSC info { get; private set; }
+
     [Header("----SYSTEM----")]
     public API api;
     public UISC ui;
     public NotificationSC noty;
     public LocalServer winServer;
     public DeepLinkHandler androidServer;
-    void Start()
-    {
-        StartCoroutine(api.GetOngoingAnime());
-    }
-    void Update()
-    {
-        
-    }
-    public void EnterToShiki()
-    {
-        if (Application.platform == RuntimePlatform.Android)
-        {
-            androidServer.StartAuthorization();
-        }
-        else if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor)
-        {
-            winServer.StartAuthorization();
-        }
-    }
+
+    public UI_Settings ui_settings;
+
 }
+
 public class AnimeImage
 {
     public string originalUrl;

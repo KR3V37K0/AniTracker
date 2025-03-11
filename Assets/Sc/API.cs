@@ -10,6 +10,7 @@ using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using static UnityEngine.EventSystems.EventTrigger;
 
 public class API : MonoBehaviour
 {
@@ -75,13 +76,7 @@ public class API : MonoBehaviour
                     foreach (Anime anime in response.data.animes)
                     {
                         int localIndex = n;
-                        /*
-                        Debug.Log($"Название: {anime.name}");
-                        Debug.Log($"Русское название: {anime.russian}");
-                        Debug.Log($"ID: {anime.id}");
-                        Debug.Log($"Постер: {anime.poster.originalUrl}");   
-                        */
-                        //Debug.Log("...." + n + " " + anime.russian);
+
                         StartCoroutine(DownloadImage(anime.poster.originalUrl, sprite 
                             =>StartCoroutine( manager.ui.Anime_to_Home(anime, sprite,localIndex))));
                         n++;
@@ -308,7 +303,7 @@ public class API : MonoBehaviour
         
         if (url != null)
         {
-            using (UnityWebRequest request = UnityWebRequest.Get(url))
+            using (UnityWebRequest request = UnityWebRequest.Get("https://shikimori.one"+url))
             {
                 request.downloadHandler = new DownloadHandlerTexture(true); // Автоматически создает Texture2D
                 yield return request.SendWebRequest();
@@ -476,6 +471,48 @@ public class API : MonoBehaviour
             return response.data.genres;
         }
         return null;
+    }
+
+
+
+    //LIST
+    public async Task<List<Anime>> getList()
+    {
+        Debug.Log(manager.user.id);
+        int page = 1;
+        List<Anime> animes = new List<Anime>();
+        while (true)
+        { 
+
+            string query = $@"
+            query {{
+                  userRates(limit: 50, page: {page}, targetType: Anime, status: completed, userId: {manager.user.id}, order: {{ field: updated_at, order: desc }}) 
+                    {{
+                        anime {{ id russian poster{{ originalUrl  }} }}
+                    }}
+             }}";
+            Task<string> apiTask = ToAPIAsync(query, QL);
+            while (!apiTask.IsCompleted)
+            {
+                await Task.Yield();
+            }
+            Debug.Log("answer " + apiTask.Result);
+            detailResponse respo = JsonConvert.DeserializeObject<detailResponse>(apiTask.Result.ToString());
+            List<UserRate> animeList = respo.data.userRates;
+
+
+            foreach (UserRate r in animeList)
+            {
+                animes.Add(r.anime);
+            }
+            Debug.Log("count " + animeList.Count);
+            if (animeList.Count < 50) 
+            {
+                Debug.Log(animes.Count);
+                return animes;
+            }           
+            page++;
+        }
     }
 }
 

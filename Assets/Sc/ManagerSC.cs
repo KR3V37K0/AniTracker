@@ -5,9 +5,10 @@ using UnityEngine;
 
 public class ManagerSC : MonoBehaviour
 {
-    public static ManagerSC info { get; private set; }
+   // public static ManagerSC info { get; private set; }
 
     [Header("----SYSTEM----")]
+
     public API api;
     public UISC ui;
     public NotificationSC noty;
@@ -16,8 +17,18 @@ public class ManagerSC : MonoBehaviour
 
     public UI_Settings ui_settings;
 
-}
+    public bool hasConnection;
 
+    public ShikimoriUser user;
+
+}
+//USER
+public class ShikimoriUser
+{
+    public int id;
+    public string nickname;
+}
+//ANIME
 public class AnimeImage
 {
     public string originalUrl;
@@ -47,6 +58,11 @@ public class Data
 {
     public List<AnimeDetails> animes;
     public List<GenreData> genres;
+    public List<UserRate> userRates;
+}
+public class UserRate
+{
+    public Anime anime;
 }
 public class GenreData
 {
@@ -123,5 +139,32 @@ public class Screenshot
 {
     public string originalUrl { get; set; }
     public Sprite sprite;
+}
+
+//DATABASE
+public class Series
+{
+    public int viewved;
+    public int aired;
+    public int all;
+}
+
+public class DB_Anime
+{
+    public int id;
+    public string name;
+    public Series series;
+}
+public class DB_List
+{
+    public int id;
+    public string name;
+    public Color color;
+    public int place;
+}
+public class DB_Link
+{
+    public int id_Anime;
+    public int id_List;
 }
 

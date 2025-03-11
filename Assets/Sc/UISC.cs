@@ -259,7 +259,7 @@ public class UISC : MonoBehaviour
 
         //DESCRIPTON
         txt_description.text = details.description;
-        if (details.description == null) txt_description.text = "нет описания";
+        if (details.description == null) txt_description.text = "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
         ReloadContainer(txt_description.gameObject);
 
         //PERSON
@@ -267,7 +267,7 @@ public class UISC : MonoBehaviour
         int count = 1;
         foreach (PersonRole r in details.personRoles)
         {
-            if((r.rolesRu.Contains("Автор оригинала"))|| (r.rolesRu.Contains("Главный продюсер"))|| (r.rolesRu.Contains("Композитор гл. муз. темы"))|| (r.rolesRu.Contains("Композитор гл. муз. темы"))|| (r.rolesRu.Contains("Музыка")))
+            if((r.rolesRu.Contains("пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"))|| (r.rolesRu.Contains("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"))|| (r.rolesRu.Contains("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ. пїЅпїЅпїЅ. пїЅпїЅпїЅпїЅ"))|| (r.rolesRu.Contains("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ. пїЅпїЅпїЅ. пїЅпїЅпїЅпїЅ"))|| (r.rolesRu.Contains("пїЅпїЅпїЅпїЅпїЅпїЅ")))
             {
                 if (count > 9) break;
                 GameObject g = Instantiate(obj_people, arr_authors);
@@ -316,7 +316,6 @@ public class UISC : MonoBehaviour
     public void ViewDetails_Similar(AnimeDetails details)
     {
         DeleteChildren(arr_similar);
-        Debug.Log(details.similar.Count);
         foreach (Anime sim in details.similar)
         {
             GameObject pan = Instantiate(obj_miniAnime, arr_similar);
@@ -346,7 +345,7 @@ public class UISC : MonoBehaviour
     }
     void butt_Anime_in_List(string id)
     {
-        Debug.Log(id + " в список!");
+        Debug.Log(id + " пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ!");
     }
     void butt_SearchGenre(GameObject b)
     {
@@ -379,15 +378,24 @@ public class UISC : MonoBehaviour
     }
     public void anim_Rotate(Transform obj)
     {
-        if (obj.name == "0")
+        if (obj.gameObject.name == "0")
         {
-            obj.name = "1";
-            Tween.Rotation(obj, new Quaternion(0f, 0f, -90f, 0f), 0.6f);
+            obj.gameObject.name = "1";
+            Tween.Rotation(obj, Quaternion.Euler(0, 0, -180), 0.6f);
         }
         else 
         {
-            obj.name = "0";
-            Tween.Rotation(obj, new Quaternion(0f, 0f, 90f, 0f), 0.6f); 
+            obj.gameObject.name = "0";
+            Tween.Rotation(obj, Quaternion.Euler(0, 0, -90), 0.6f); 
         }
     }
+    public void InternetSplash(bool active)
+    {
+        windows[0].transform.Find("_no_Internet").gameObject.SetActive(!active);
+        windows[1].transform.Find("_no_Internet").gameObject.SetActive(!active);
+        icons[0].GetComponent<Button>().interactable = active;
+        icons[1].GetComponent<Button>().interactable = active;
+    }
+    
+    
 }

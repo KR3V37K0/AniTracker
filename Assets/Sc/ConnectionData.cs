@@ -1,7 +1,7 @@
-
 using System;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class ConnectionData:MonoBehaviour
 {
@@ -28,7 +28,6 @@ public class ConnectionData:MonoBehaviour
         public int expires_in;
         public string token_type;
     }
-
     public static void Succes()
     {
         TOKEN.access_token = PlayerPrefs.GetString("access_token");
@@ -37,4 +36,5 @@ public class ConnectionData:MonoBehaviour
         PlayerPrefs.Save();
         OnUserAuthenticated?.Invoke();
     }
+
 }

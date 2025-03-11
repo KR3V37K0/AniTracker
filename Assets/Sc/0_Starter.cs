@@ -9,9 +9,20 @@ using UnityEngine.Networking;
 public class A_Starter : MonoBehaviour
 {
     ManagerSC manager;
+    [SerializeField]GameObject servers;
     private void Awake()
     {
+        servers.SetActive(false);
         manager = GetComponent<ManagerSC>();
+        manager.hasConnection = false;
+    }
+    private void OnEnable()
+    {
+        ConnectionData.OnUserAuthenticated += GetUserInfo;
+    }
+    private void OnDisable()
+    {
+        ConnectionData.OnUserAuthenticated -= GetUserInfo;
     }
     private void Start()
     {
@@ -24,6 +35,7 @@ public class A_Starter : MonoBehaviour
             request.timeout = 2; 
             yield return request.SendWebRequest();
 
+            manager.ui.InternetSplash(request.result == UnityWebRequest.Result.Success);
             if (request.result == UnityWebRequest.Result.Success)
             {
                 Debug.Log("»ÌÚÂÌÂÚ ‰ÓÒÚÛÔÂÌ.");
@@ -38,13 +50,55 @@ public class A_Starter : MonoBehaviour
     }
     void Connect()
     {
-        // manager.api.EnterToShiki();
+        manager.hasConnection=true;
+        servers.SetActive(true);
+        
         StartCoroutine(manager.api.GetOngoingAnime());
     }
     void noConnect()
     {
-
+        manager.hasConnection = false;
+        servers.SetActive(false);
     }
 
+    void GetUserInfo()
+    {
+        StartCoroutine(GetUserInfo_IENUM(0));
+    }
+    IEnumerator GetUserInfo_IENUM(int tick)
+    {
+        if (manager.hasConnection)
+        {
 
+            string url = "https://shikimori.one/api/users/whoami";
+
+            using (UnityWebRequest request = UnityWebRequest.Get(url))
+            {
+                request.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("access_token")}");
+                yield return request.SendWebRequest();
+
+                if (request.result == UnityWebRequest.Result.Success)
+                {
+                    string jsonResponse = request.downloadHandler.text;
+
+                    ShikimoriUser user = JsonUtility.FromJson<ShikimoriUser>(jsonResponse);
+                    manager.user = user;
+                    var lTask = manager.api.getList(); //œ≈–≈Õ≈—“» œŒÀ”◊≈Õ»≈ —œ»— Œ¬
+                }
+                else
+                {
+                    Debug.LogError($"Œ¯Ë·Í‡: {request.error}");
+                    PlayerPrefs.DeleteAll();
+                    PlayerPrefs.SetInt("authorization_shown", 1);
+                    PlayerPrefs.Save();
+
+                    manager.ui_settings.show_popupEnter();
+                }
+            }          
+        }
+        else if (tick < 2)
+        {
+            StartCoroutine(GetUserInfo_IENUM(tick + 1));
+        }
+    }
 }

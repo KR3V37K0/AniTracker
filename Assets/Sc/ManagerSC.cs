@@ -7,26 +7,27 @@ public class ManagerSC : MonoBehaviour
 {
    // public static ManagerSC info { get; private set; }
 
-    [Header("----SYSTEM----")]
-
+[Header("----SYSTEM----")]
     public API api;
-    public UISC ui;
     public NotificationSC noty;
     public LocalServer winServer;
     public DeepLinkHandler androidServer;
-
-    public UI_Settings ui_settings;
-
     public bool hasConnection;
-
     public ShikimoriUser user;
 
+[Header("----UI----")]
+    public UISC ui;
+    public UI_Search ui_search;
+    public UI_Lists ui_lists;
+    public UI_Settings ui_settings;
+    
 }
 //USER
 public class ShikimoriUser
 {
     public int id;
     public string nickname;
+    public string avatar;
 }
 //ANIME
 public class AnimeImage
@@ -161,6 +162,13 @@ public class DB_List
     public string name;
     public Color color;
     public int place;
+    public DB_List(int id, string name, Color color, int place)
+    {
+        this.id = id;
+        this.name = name;
+        this.color = color;
+        this.place = place;
+    }
 }
 public class DB_Link
 {

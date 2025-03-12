@@ -2,11 +2,21 @@ using PrimeTween;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 public class UI_Settings : MonoBehaviour
 {
-    [SerializeField] GameObject popupEnter;
+    ManagerSC manager;
+    [SerializeField] GameObject popupEnter,viewer;
+    [SerializeField] Image img_Ava;
+    [SerializeField] TMP_Text txt_name;
     [SerializeField] string URL_Rules;
+    private void Start()
+    {
+        manager = GetComponent<ManagerSC>();
+        viewer.SetActive(false);
+    }
     public void show_popupEnter()
     {
         Sequence.Create(cycles: 1)
@@ -17,5 +27,11 @@ public class UI_Settings : MonoBehaviour
     public void btn_openRules()
     {
         Application.OpenURL(URL_Rules);
+    }
+    public void ViewUserInfo()
+    {
+        if(manager.user.avatar!=null)   manager.api.DownloadImage(manager.user.avatar, (img) => img_Ava.sprite = img);
+        txt_name.text = manager.user.nickname;
+        viewer.SetActive(true);
     }
 }

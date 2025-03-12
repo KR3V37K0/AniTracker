@@ -11,9 +11,10 @@ public class UISC : MonoBehaviour
 [Header("----PAGES----")]
     public UI_Search ui_search;
 [Header("----POPUPS----")]
-
+    [SerializeField] GameObject obj_toList;
     [SerializeField] GameObject popupLoading;
     [SerializeField] GameObject obj_Load;
+    [SerializeField] GameObject obj_miniList;
 [Header("----NAVIGATION----")]
     [SerializeField] GameObject panel_Navigation;
     [SerializeField] GameObject[]icons=new GameObject[6];
@@ -100,7 +101,7 @@ public class UISC : MonoBehaviour
                 break;
 
                 case 1://SEARCH
-
+                if (manager.ui_search.genresList == null) manager.ui_search.getGenres();
                 break;
 
                 case 2: //LISTS
@@ -259,15 +260,16 @@ public class UISC : MonoBehaviour
 
         //DESCRIPTON
         txt_description.text = details.description;
-        if (details.description == null) txt_description.text = "��� ��������";
+        if (details.description == null) txt_description.text = "нет описания";
         ReloadContainer(txt_description.gameObject);
 
         //PERSON
         DeleteChildren(arr_authors);
         int count = 1;
+        List<string> roles = new List<string>();
         foreach (PersonRole r in details.personRoles)
         {
-            if((r.rolesRu.Contains("����� ���������"))|| (r.rolesRu.Contains("������� ��������"))|| (r.rolesRu.Contains("���������� ��. ���. ����"))|| (r.rolesRu.Contains("���������� ��. ���. ����"))|| (r.rolesRu.Contains("������")))
+            if((r.rolesRu.Contains("Автор оригинала"))|| (r.rolesRu.Contains("Режиссёр"))|| (r.rolesRu.Contains("Музыка"))|| (r.rolesRu.Contains("Арт-директор")))
             {
                 if (count > 9) break;
                 GameObject g = Instantiate(obj_people, arr_authors);
@@ -275,9 +277,10 @@ public class UISC : MonoBehaviour
                 g.transform.Find("txt_name").GetComponent<TMP_Text>().text = r.person.name;
                 foreach (string rank in r.rolesRu)
                 {
-                    g.transform.Find("txt_rank").GetComponent<TMP_Text>().text += rank + "  ";
+                    g.transform.Find("txt_rank").GetComponent<TMP_Text>().text += rank + "\n";
                 }
                 count++;
+                if (r.rolesRu.Contains("Автор оригинала")) { g.transform.SetAsFirstSibling(); }
 
             }
         }
@@ -345,7 +348,7 @@ public class UISC : MonoBehaviour
     }
     void butt_Anime_in_List(string id)
     {
-        Debug.Log(id + " � ������!");
+        obj_toList.SetActive(true);
     }
     void butt_SearchGenre(GameObject b)
     {

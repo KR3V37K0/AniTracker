@@ -41,7 +41,7 @@ public class API : MonoBehaviour
     {
         string query = @"
         query {
-            animes(status: ""ongoing"", limit: 15, order: ranked) {
+            animes(status: ""ongoing"", limit: 18, order: ranked) {
                 id
                 name
                 russian       
@@ -298,14 +298,17 @@ public class API : MonoBehaviour
             }
         }
     }
-    IEnumerator DownloadImage(string url,Action<Sprite> callback)
+    public IEnumerator DownloadImage(string url,Action<Sprite> callback)
     {
         
         if (url != null)
         {
-            using (UnityWebRequest request = UnityWebRequest.Get("https://shikimori.one"+url))
+            using (UnityWebRequest request = UnityWebRequest.Get(url))
             {
                 request.downloadHandler = new DownloadHandlerTexture(true); // Автоматически создает Texture2D
+                request.SetRequestHeader("Content-Type", "application/json");
+                request.SetRequestHeader("User-Agent", "AniTracker");
+
                 yield return request.SendWebRequest();
 
                 if (request.result == UnityWebRequest.Result.Success)
@@ -478,7 +481,6 @@ public class API : MonoBehaviour
     //LIST
     public async Task<List<Anime>> getList()
     {
-        Debug.Log(manager.user.id);
         int page = 1;
         List<Anime> animes = new List<Anime>();
         while (true)
@@ -496,7 +498,6 @@ public class API : MonoBehaviour
             {
                 await Task.Yield();
             }
-            Debug.Log("answer " + apiTask.Result);
             detailResponse respo = JsonConvert.DeserializeObject<detailResponse>(apiTask.Result.ToString());
             List<UserRate> animeList = respo.data.userRates;
 
@@ -505,10 +506,8 @@ public class API : MonoBehaviour
             {
                 animes.Add(r.anime);
             }
-            Debug.Log("count " + animeList.Count);
             if (animeList.Count < 50) 
             {
-                Debug.Log(animes.Count);
                 return animes;
             }           
             page++;

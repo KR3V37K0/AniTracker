@@ -38,4 +38,23 @@ public class DATABASE_SC : MonoBehaviour
         dbconn.Close();
         dbconn = null;
     }
+
+    List<DB_List> Get_AllLists()
+    {
+        OpenConnection();
+
+        List<DB_List> list = new List<DB_List>();
+
+        string sqlQuery = "Select id,name,color,place FROM List";
+        dbcmd.CommandText = sqlQuery;
+        reader = dbcmd.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(new DB_List(reader.GetInt32(0), reader.GetString(1), Color.white, reader.GetInt32(3)));
+        }
+
+        CloseConnection();
+        
+        return list;
+    }
 }

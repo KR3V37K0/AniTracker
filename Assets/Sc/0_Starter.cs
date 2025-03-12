@@ -83,7 +83,7 @@ public class A_Starter : MonoBehaviour
 
                     ShikimoriUser user = JsonUtility.FromJson<ShikimoriUser>(jsonResponse);
                     manager.user = user;
-                    var lTask = manager.api.getList(); //оепемеярх онксвемхе яохяйнб
+                    manager.ui_settings.ViewUserInfo();
                 }
                 else
                 {

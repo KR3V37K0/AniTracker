@@ -19,17 +19,17 @@ public class UI_Search : MonoBehaviour
     [SerializeField] Transform view_Genres;
     [SerializeField] Transform view_Themes;
 
-    List<GenreData> genresList;
+    public List<GenreData> genresList;
     bool splited_GaT;
 
     private void Start()
     {
         manager = gameObject.GetComponent<ManagerSC>();
-        getGenres();
+        manager.ui_search = gameObject.GetComponent<UI_Search>();
     }
 
     //GENRES
-    async void getGenres()
+    public async void getGenres()
     {
         Task<List<GenreData>> gTask = manager.api.Get_GenresList();
         while (!gTask.IsCompleted)

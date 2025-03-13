@@ -159,6 +159,8 @@ public class UISC : MonoBehaviour
         anime.GetComponent<Button>().onClick.AddListener(() => but_ViewDetails(anime.gameObject,Data));
         anime.SetSiblingIndex(number);
         sort_children(home_slot);
+
+        activate_Window(0);
         yield return null;   
     }
     private void sort_children(Transform parent)

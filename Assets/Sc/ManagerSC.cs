@@ -180,7 +180,7 @@ public class DB_Link
 //API
 public class Query_Search
 {
-    public Dictionary<string, string> param = new Dictionary<string, string>()
+   /* public Dictionary<string, string> param = new Dictionary<string, string>()
         {
             { "search", null},
             { "status", null},
@@ -193,14 +193,15 @@ public class Query_Search
             { "order", null},
             { "score", null},
             { "kind", null}
-        };
-    public string search, mylist, excludeids, franchise,season,rating,order= "ranked";
+        };*/
+    public string search, mylist, excludeids, franchise,season,order= "ranked",censure="true";
     public float score=1;
     public int page=1;
 
     public List<string>kind=new List<string>();
     public List<string> genre = new List<string>();
     public List<string> status = new List<string>();
+    public List<string> rating = new List<string>();
     public string apply()
     {
         string Aquery = $@"
@@ -223,18 +224,18 @@ public class Query_Search
 
         query += $@", page: {page}";
         query += $@", search: ""{search}""";
-        if (status.Count > 0)  query += $@", status: {List_toString(status)}";
+        if (status.Count > 0)  query += $@", status: ""{List_toString(status)}""";
         if (kind.Count>0) query += $@", kind: ""{List_toString(kind)}""";
         if (genre.Count > 0) query += $@", genre: ""{List_toString(genre)}""";
         if (mylist != null) query += $@", mylist: ""{mylist}""";
         if (franchise != null) query += $@", excludeIds: ""{franchise}""";
         query += $@", score: {score}";
         if (season != null) query += $@", season: ""{season}""";
-        if (rating != null) query += $@", rating: {rating}";
+        if (rating.Count >0) query += $@", rating: ""{List_toString(rating)}""";
         query += $@", order: {order}";
 
 
-        query +=$@", censored: true) 
+        query +=$@", censored: {censure}) 
                     {{
                         id
                         name

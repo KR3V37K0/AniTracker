@@ -68,6 +68,7 @@ public class API : MonoBehaviour
             else
             {
                 Debug.LogError("? Не удалось извлечь список аниме из JSON.");
+                Debug.LogError(apiTask.Result);
             }
         }
     }

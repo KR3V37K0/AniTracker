@@ -55,7 +55,8 @@ public class UI_Search : MonoBehaviour
                 obj = Instantiate(obj_checkbox, view_Genres);
             }
             obj.GetComponentInChildren<TMP_Text>().text = g.russian;
-            obj.name = g.name;
+            obj.name = g.id;
+            obj.GetComponent<Toggle>().onValueChanged.AddListener((isOn) => check_genre(g.id,isOn));
         }
         //view_Genres.Find("btn_Split").SetSiblingIndex(genres.Length);
 
@@ -110,6 +111,11 @@ public class UI_Search : MonoBehaviour
     {
         query.search = txt.text;
     }
+    string[] sort_value=new string[] {"ranked", "popularity", "name", "aired_on", "random", "status", "episodes"};
+    public void drop_sort(TMP_Dropdown drop)
+    {
+        query.order = sort_value[drop.value];
+    }
     public void check_type(Toggle toggle)
     {
         if (toggle.isOn)
@@ -125,6 +131,34 @@ public class UI_Search : MonoBehaviour
             query.status.Add(toggle.name);
         }
         else query.status.Remove(toggle.name);
+    }
+    public void slider_score(Slider slider)
+    {        
+        query.score =Mathf.Clamp(slider.value,1,10);
+    }
+    public void slider_year(float left, float right)
+    {
+        query.season=left+"_"+right;
+        if(left<1980) query.season = "ancient," + left + "_" + right;
+    }
+    public void check_rating(Toggle toggle)
+    {
+        query.censure = "true";
+        if (toggle.isOn)
+        {
+            query.rating.Add(toggle.name);
+            if (toggle.name == "r_plus,rx") query.censure = "false";
+        }
+        else query.rating.Remove(toggle.name);
+    }
+    public void check_genre(string name, bool on)
+    {        
+        if (on)
+        {
+            query.genre.Add(name);
+        }
+        else query.genre.Remove(name);
+        Debug.Log(query.genre.Count+" "+ name);
     }
     //LIST
 

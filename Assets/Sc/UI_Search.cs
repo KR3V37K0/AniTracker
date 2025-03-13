@@ -20,7 +20,9 @@ public class UI_Search : MonoBehaviour
     [SerializeField] Transform view_Themes;
 
     public List<GenreData> genresList;
+
     bool splited_GaT;
+    Query_Search query = new Query_Search();
 
     private void Start()
     {
@@ -53,6 +55,7 @@ public class UI_Search : MonoBehaviour
                 obj = Instantiate(obj_checkbox, view_Genres);
             }
             obj.GetComponentInChildren<TMP_Text>().text = g.russian;
+            obj.name = g.name;
         }
         //view_Genres.Find("btn_Split").SetSiblingIndex(genres.Length);
 
@@ -65,7 +68,6 @@ public class UI_Search : MonoBehaviour
     }
     public void btn_Split_GaT(GameObject btn)
     {
-        Debug.Log("click");
         RectTransform rect = view_Genres.parent.GetComponent<RectTransform>();
         if (splited_GaT)
         {
@@ -98,7 +100,32 @@ public class UI_Search : MonoBehaviour
 
     }
 
-
+    //DATA
+    public void btn_Enter()
+    {
+        Debug.Log( query.apply());
+        StartCoroutine(manager.api.SearchResult(query.apply()));
+    }
+    public void input_search(TMP_InputField txt)
+    {
+        query.search = txt.text;
+    }
+    public void check_type(Toggle toggle)
+    {
+        if (toggle.isOn)
+        {
+            query.kind.Add(toggle.name);
+        }
+        else query.kind.Remove(toggle.name);
+    }
+    public void check_status(Toggle toggle)
+    {
+        if (toggle.isOn)
+        {
+            query.status.Add(toggle.name);
+        }
+        else query.status.Remove(toggle.name);
+    }
     //LIST
 
 

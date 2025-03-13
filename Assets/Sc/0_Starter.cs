@@ -48,14 +48,14 @@ public class A_Starter : MonoBehaviour
             }
         }
     }
-    void Connect()
+    public void Connect()
     {
         manager.hasConnection=true;
         servers.SetActive(true);
         
         StartCoroutine(manager.api.GetOngoingAnime());
     }
-    void noConnect()
+    public void noConnect()
     {
         manager.hasConnection = false;
         servers.SetActive(false);

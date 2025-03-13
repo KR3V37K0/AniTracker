@@ -14,6 +14,7 @@ public class ManagerSC : MonoBehaviour
     public DeepLinkHandler androidServer;
     public bool hasConnection;
     public ShikimoriUser user;
+    public A_Starter starter;
 
 [Header("----UI----")]
     public UISC ui;
@@ -174,5 +175,84 @@ public class DB_Link
 {
     public int id_Anime;
     public int id_List;
+}
+
+//API
+public class Query_Search
+{
+    public Dictionary<string, string> param = new Dictionary<string, string>()
+        {
+            { "search", null},
+            { "status", null},
+            { "genre", null},
+            { "mylist", null},
+            { "excludeids", null},
+            { "franchise", null},
+            { "season", null},
+            { "rating", null},
+            { "order", null},
+            { "score", null},
+            { "kind", null}
+        };
+    public string search, mylist, excludeids, franchise,season,rating,order= "ranked";
+    public float score=1;
+    public int page=1;
+
+    public List<string>kind=new List<string>();
+    public List<string> genre = new List<string>();
+    public List<string> status = new List<string>();
+    public string apply()
+    {
+        string Aquery = $@"
+        query {{
+            {{
+              animes(limit: 18, 
+                search: "", page: 1, status: word, kind:"", genre:"", mylist:"", excludeIds:"",franchise: "", score:float, season:string, rating:word, order: ranked,
+                censored: true) 
+                {{
+                    id
+                    name
+                    russian
+                    poster
+                }}
+            }}
+         }}";
+        string query = $@"
+        query {{
+              animes(limit: 18 ";
+
+        query += $@", page: {page}";
+        query += $@", search: ""{search}""";
+        if (status.Count > 0)  query += $@", status: {List_toString(status)}";
+        if (kind.Count>0) query += $@", kind: ""{List_toString(kind)}""";
+        if (genre.Count > 0) query += $@", genre: ""{List_toString(genre)}""";
+        if (mylist != null) query += $@", mylist: ""{mylist}""";
+        if (franchise != null) query += $@", excludeIds: ""{franchise}""";
+        query += $@", score: {score}";
+        if (season != null) query += $@", season: ""{season}""";
+        if (rating != null) query += $@", rating: {rating}";
+        query += $@", order: {order}";
+
+
+        query +=$@", censored: true) 
+                    {{
+                        id
+                        name
+                        russian
+                        poster {{ originalUrl }}
+                    }}                
+             }}";
+        return query;
+    }
+    public string List_toString(List<string>list) 
+    {
+        string s="";
+        foreach (string item in list)
+        {
+            s += item + ",";
+        }
+        s = s.Remove(s.Length - 1);
+        return s;
+    }
 }
 

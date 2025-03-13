@@ -346,6 +346,10 @@ public class UISC : MonoBehaviour
             Destroy(child.gameObject);
         }
     }
+    public void clear_Home()
+    {
+        DeleteChildren(home_slot);
+    }
     void butt_Anime_in_List(string id)
     {
         obj_toList.SetActive(true);
@@ -399,6 +403,6 @@ public class UISC : MonoBehaviour
         icons[0].GetComponent<Button>().interactable = active;
         icons[1].GetComponent<Button>().interactable = active;
     }
-    
+
     
 }

@@ -37,6 +37,40 @@ public class API : MonoBehaviour
         }
     }
 
+    public IEnumerator SearchResult(string  query)
+    {
+        Task<string> apiTask = ToAPIAsync(query, QL);
+        while (!apiTask.IsCompleted)
+        {
+            yield return null; // Ждем завершения задачи
+        }
+        if (apiTask.IsFaulted)
+        {
+            Debug.LogError("Ошибка: " + apiTask.Exception.Message);
+        }
+        else
+        {           
+            AnimeResponse response = JsonConvert.DeserializeObject<AnimeResponse>(apiTask.Result);
+
+            if (response?.data?.animes != null)
+            {
+                manager.ui.clear_Home();
+                int n = 0;
+                foreach (Anime anime in response.data.animes)
+                {
+                    int localIndex = n;
+
+                    StartCoroutine(DownloadImage(anime.poster.originalUrl, sprite
+                        => StartCoroutine(manager.ui.Anime_to_Home(anime, sprite, localIndex))));
+                    n++;
+                }
+            }
+            else
+            {
+                Debug.LogError("? Не удалось извлечь список аниме из JSON.");
+            }
+        }
+    }
     public IEnumerator GetOngoingAnime()
     {
         string query = @"
@@ -127,6 +161,7 @@ public class API : MonoBehaviour
             }
             else
             {
+                manager.starter.noConnect();
                 Debug.LogError("Ошибка запроса: " + request.error);
                 throw new System.Exception("Ошибка запроса: " + request.error);
             }

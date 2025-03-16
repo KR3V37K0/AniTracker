@@ -98,6 +98,9 @@ public class A_Starter : MonoBehaviour
                     ShikimoriUser user = JsonUtility.FromJson<ShikimoriUser>(jsonResponse);
                     manager.user = user;
                     manager.ui_settings.ViewUserInfo();
+
+                    //delete
+                   // manager.db.WriteUpdate();
                 }
                 else
                 {

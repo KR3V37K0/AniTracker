@@ -477,6 +477,7 @@ public class API : MonoBehaviour
             {
                 await Task.Yield();
             }
+            Debug.Log(apiTask.Result);
             detailResponse respo = JsonConvert.DeserializeObject<detailResponse>(apiTask.Result.ToString());
             List<UserRate> animeList = respo.data.userRates;
 

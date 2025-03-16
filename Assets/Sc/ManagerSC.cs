@@ -16,6 +16,7 @@ public class ManagerSC : MonoBehaviour
     public bool hasConnection;
     public ShikimoriUser user;
     public A_Starter starter;
+    public DATABASE_SC db;
 
 [Header("----UI----")]
     public UISC ui;
@@ -149,6 +150,7 @@ public class Series
     public int viewved;
     public int aired;
     public int all;
+
 }
 
 public class FastList
@@ -161,6 +163,17 @@ public class DB_Anime
     public int id;
     public string name;
     public Series series;
+    public DB_Anime(int id, string name, string series)
+    {
+        this.id = id;
+        this.name = name;
+
+        this.series=new Series();
+        string[] parts = series.Split('/');
+        this.series.viewved = int.Parse(parts[0]);
+        this.series.aired = int.Parse(parts[1]);
+        this.series.all = int.Parse(parts[2]);
+    }
 }
 public class DB_List
 {
@@ -168,12 +181,14 @@ public class DB_List
     public string name;
     public Color color;
     public int place;
+    public List<DB_Anime> animes;
     public DB_List(int id, string name, Color color, int place)
     {
         this.id = id;
         this.name = name;
         this.color = color;
         this.place = place;
+        this.animes = new List<DB_Anime>();
     }
 }
 public class DB_Link

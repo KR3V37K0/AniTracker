@@ -73,7 +73,7 @@ public class UISC : MonoBehaviour
     public void activate_Window(int i)
     {
         //animation selector
-        if (i+"" != selector.name)
+        if (i + "" != selector.name)
         {
             Sequence.Create(cycles: 1)
             .Group(Tween.Scale(icons[int.Parse(selector.name)].transform, endValue: 1f, duration: 0.4f, endDelay: 0.1f))
@@ -86,14 +86,14 @@ public class UISC : MonoBehaviour
             .Group(Tween.PositionY(icons[i].transform, endValue: icons[i].transform.position.y + 0.1f, duration: 0.4f, endDelay: 0.1f))
             .Group(Tween.Color(icons[i].transform.GetComponent<Image>(), Color.white, duration: 0.4f, endDelay: 0.1f))
 
-            .ChainCallback(() => selector.name = i.ToString())
-            .ChainCallback(() => Swap_Windows(i));
+            .ChainCallback(() => selector.name = i.ToString());
         }
+        Swap_Windows(i);
 
         //logic       
-            switch(i)
-            {
-                case 0://HOME              
+        switch (i)
+        {
+            case 0://HOME              
                 txt_SearchTitle.text = ConnectionData.currentSearch.title;
                 if (active==0)
                 {
@@ -113,25 +113,27 @@ public class UISC : MonoBehaviour
                 }
                 break;
 
-                case 1://SEARCH
+            case 1://SEARCH
                 break;
 
-                case 2: //LISTS
+            case 2: //LISTS
+                if(active==2) manager.ui_lists.open_window(false);
+                else manager.ui_lists.open_window(true);
 
                 break;
 
-                case 3://CALENDAR
+            case 3://CALENDAR
 
                 break;
 
-                case 4://SETTIGS 
+            case 4://SETTIGS 
                 if (PlayerPrefs.HasKey("access_token")) btn_Enter.interactable = false;
                 else btn_Enter.interactable = true;
                 break;
 
-            }
-            if (active == 5) Tween.PositionY(Scroll.transform, 0f, 2f);
-            active = i;     
+        }
+        if (active == 5) Tween.PositionY(Scroll.transform, 0f, 2f);
+        active = i;     
     }
 
     private void Swap_Windows(int i)

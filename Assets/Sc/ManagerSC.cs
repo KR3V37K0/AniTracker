@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Windows;
 
 public class ManagerSC : MonoBehaviour
 {
@@ -21,7 +22,6 @@ public class ManagerSC : MonoBehaviour
     public UI_Search ui_search;
     public UI_Lists ui_lists;
     public UI_Settings ui_settings;
-    
 }
 //USER
 public class ShikimoriUser
@@ -151,6 +151,11 @@ public class Series
     public int all;
 }
 
+public class FastList
+{
+    public string id_list,name,russian;
+    public List<Anime> animes;
+}
 public class DB_Anime
 {
     public int id;
@@ -180,44 +185,20 @@ public class DB_Link
 //API
 public class Query_Search
 {
-   /* public Dictionary<string, string> param = new Dictionary<string, string>()
-        {
-            { "search", null},
-            { "status", null},
-            { "genre", null},
-            { "mylist", null},
-            { "excludeids", null},
-            { "franchise", null},
-            { "season", null},
-            { "rating", null},
-            { "order", null},
-            { "score", null},
-            { "kind", null}
-        };*/
     public string search, mylist, excludeids, franchise,season,order= "ranked",censure="true";
     public float score=1;
     public int page=1;
-
     public List<string>kind=new List<string>();
-    public List<string> genre = new List<string>();
+    public List<GenreData> genre = new List<GenreData>();
     public List<string> status = new List<string>();
     public List<string> rating = new List<string>();
+
+    public string title = "";
+    public string genre_title="";
     public string apply()
     {
-        string Aquery = $@"
-        query {{
-            {{
-              animes(limit: 18, 
-                search: "", page: 1, status: word, kind:"", genre:"", mylist:"", excludeIds:"",franchise: "", score:float, season:string, rating:word, order: ranked,
-                censored: true) 
-                {{
-                    id
-                    name
-                    russian
-                    poster
-                }}
-            }}
-         }}";
+        generate_title();
+
         string query = $@"
         query {{
               animes(limit: 18 ";
@@ -226,14 +207,13 @@ public class Query_Search
         query += $@", search: ""{search}""";
         if (status.Count > 0)  query += $@", status: ""{List_toString(status)}""";
         if (kind.Count>0) query += $@", kind: ""{List_toString(kind)}""";
-        if (genre.Count > 0) query += $@", genre: ""{List_toString(genre)}""";
+        if (genre.Count > 0) query += $@", genre: ""{Genres_toString()}""";
         if (mylist != null) query += $@", mylist: ""{mylist}""";
         if (franchise != null) query += $@", excludeIds: ""{franchise}""";
         query += $@", score: {score}";
         if (season != null) query += $@", season: ""{season}""";
         if (rating.Count >0) query += $@", rating: ""{List_toString(rating)}""";
         query += $@", order: {order}";
-
 
         query +=$@", censored: {censure}) 
                     {{
@@ -254,6 +234,74 @@ public class Query_Search
         }
         s = s.Remove(s.Length - 1);
         return s;
+    }
+    string Genres_toString() 
+    {
+        string s="";
+        foreach(GenreData g in genre)
+        {
+            s += g.id + ",";
+        }
+        s = s.Remove(s.Length - 1);
+        return s;
+    }
+    void generate_title()
+    {
+        title = "";
+
+        if (status.Count == 1)
+        {
+            switch (status[0])
+            {
+                case "anons":
+                    title += "анонсирован ";
+                    break;
+                case "ongoing":
+                    title += "сейчас выходит ";
+                    break;
+                case "released":
+                    title += "уже вышел ";
+                    break;
+            }
+        }
+        if (kind.Count == 1)
+        {
+            switch (kind[0])
+            {
+                case "movie":
+                    title += "фильм ";
+                    break;
+                case "tv":
+                    title += "сериал ";
+                    break;
+                case "ona":
+                    title += "ona ";
+                    break;
+                case "ova":
+                    title += "ova ";
+                    break;
+                case "special,tv_special":
+                    title += "спешл ";
+                    break;
+                case "music":
+                    title += "музыка ";
+                    break;
+                case "pv":
+                    title += "промо ";
+                    break;
+            }
+        }
+
+        if (search != null)
+        { 
+            if(search!="")  title += "'" + search + "'"; 
+        }
+        else if(genre.Count == 1)
+        {
+            title += genre_title + " ";
+        }
+
+        if (title != "") title = char.ToUpper(title[0]) + title.Substring(1);
     }
 }
 

@@ -4,7 +4,6 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Threading.Tasks;
-using UnityEditor.Search;
 using System.ComponentModel;
 using System.Linq;
 using UnityEngine.Analytics;
@@ -105,7 +104,8 @@ public class UI_Search : MonoBehaviour
     public void btn_Enter()
     {
         Debug.Log( query.apply());
-        StartCoroutine(manager.api.SearchResult(query.apply()));
+        ConnectionData.currentSearch = query;
+        StartCoroutine(manager.api.SearchResult());
     }
     public void input_search(TMP_InputField txt)
     {
@@ -154,11 +154,10 @@ public class UI_Search : MonoBehaviour
     public void check_genre(string name, bool on)
     {        
         if (on)
-        {
-            query.genre.Add(name);
+        {  
+            query.genre.Add(genresList.Find(genre => genre.id == name));
         }
-        else query.genre.Remove(name);
-        Debug.Log(query.genre.Count+" "+ name);
+        else query.genre.Remove(genresList.Find(genre => genre.id == name));
     }
     //LIST
 

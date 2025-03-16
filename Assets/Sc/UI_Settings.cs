@@ -11,6 +11,7 @@ public class UI_Settings : MonoBehaviour
     [SerializeField] GameObject popupEnter,viewer;
     [SerializeField] Image img_Ava;
     [SerializeField] TMP_Text txt_name;
+    [SerializeField] Button btn_Enter;
     [SerializeField] string URL_Rules;
     private void Start()
     {
@@ -33,5 +34,6 @@ public class UI_Settings : MonoBehaviour
         if(manager.user.avatar!=null)   manager.api.DownloadImage(manager.user.avatar, (img) => img_Ava.sprite = img);
         txt_name.text = manager.user.nickname;
         viewer.SetActive(true);
+        btn_Enter.interactable=false;
     }
 }

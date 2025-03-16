@@ -28,6 +28,7 @@ public class UISC : MonoBehaviour
     public string onHome;
     [SerializeField] Transform home_slot;
     [SerializeField] GameObject panelAnime;
+    [SerializeField] TMP_Text txt_SearchTitle;
 
 [Header("---DETAILS--")]
     [SerializeField] GameObject Scroll;
@@ -67,22 +68,34 @@ public class UISC : MonoBehaviour
         panel_Navigation.SetActive(true);
         manager = gameObject.transform.GetComponent<ManagerSC>();
         details.SetActive(false);
-        activate_Window(0);
+        //activate_Window(0);
     }
     public void activate_Window(int i)
     {
-        //animation
+        //animation selector
+        if (i+"" != selector.name)
+        {
             Sequence.Create(cycles: 1)
-                .Group(Tween.Scale(icons[int.Parse(selector.name)].transform, endValue: 1f, duration: 0.4f, endDelay: 0.1f))
-                .Group(Tween.PositionX(selector.transform, icons[i].transform.position.x, 0.25f))
-                .Group(Tween.Scale(icons[i].transform, endValue: 1.25f, duration: 0.4f, endDelay: 0.1f))
-                .ChainCallback(() => selector.name = i.ToString())
-                .ChainCallback(() => Swap_Windows(i));
+            .Group(Tween.Scale(icons[int.Parse(selector.name)].transform, endValue: 1f, duration: 0.4f, endDelay: 0.1f))
+            .Group(Tween.PositionY(icons[int.Parse(selector.name)].transform, endValue: icons[int.Parse(selector.name)].transform.position.y - 0.1f, duration: 0.4f, endDelay: 0.1f))
+            .Group(Tween.Color(icons[int.Parse(selector.name)].transform.GetComponent<Image>(), Color.black, duration: 0.4f, endDelay: 0.1f))
+
+            .Group(Tween.PositionX(selector.transform, icons[i].transform.position.x, 0.25f))
+
+            .Group(Tween.Scale(icons[i].transform, endValue: 1.25f, duration: 0.4f, endDelay: 0.1f))
+            .Group(Tween.PositionY(icons[i].transform, endValue: icons[i].transform.position.y + 0.1f, duration: 0.4f, endDelay: 0.1f))
+            .Group(Tween.Color(icons[i].transform.GetComponent<Image>(), Color.white, duration: 0.4f, endDelay: 0.1f))
+
+            .ChainCallback(() => selector.name = i.ToString())
+            .ChainCallback(() => Swap_Windows(i));
+        }
+
         //logic       
             switch(i)
             {
-                case 0://HOME
-                if(active==0)
+                case 0://HOME              
+                txt_SearchTitle.text = ConnectionData.currentSearch.title;
+                if (active==0)
                 {
                     if (details.activeSelf)
                     {
@@ -101,7 +114,6 @@ public class UISC : MonoBehaviour
                 break;
 
                 case 1://SEARCH
-                if (manager.ui_search.genresList == null) manager.ui_search.getGenres();
                 break;
 
                 case 2: //LISTS
@@ -160,7 +172,6 @@ public class UISC : MonoBehaviour
         anime.SetSiblingIndex(number);
         sort_children(home_slot);
 
-        activate_Window(0);
         yield return null;   
     }
     private void sort_children(Transform parent)
@@ -358,7 +369,11 @@ public class UISC : MonoBehaviour
     }
     void butt_SearchGenre(GameObject b)
     {
-        Debug.Log("search by " + b.GetComponent<TMP_Text>().text);
+        Query_Search query = new Query_Search();
+        query.genre.Add(manager.ui_search.genresList.Find(genre => genre.id == b.name));
+        query.genre_title = b.GetComponent<TMP_Text>().text;
+        ConnectionData.currentSearch=query;
+        StartCoroutine( manager.api.SearchResult());
     }
     void StartLoad()
     {

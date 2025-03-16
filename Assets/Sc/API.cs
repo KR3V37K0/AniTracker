@@ -37,8 +37,9 @@ public class API : MonoBehaviour
         }
     }
 
-    public IEnumerator SearchResult(string  query)
+    public IEnumerator SearchResult()
     {
+        string query = ConnectionData.currentSearch.apply();
         Task<string> apiTask = ToAPIAsync(query, QL);
         while (!apiTask.IsCompleted)
         {
@@ -55,6 +56,8 @@ public class API : MonoBehaviour
             if (response?.data?.animes != null)
             {
                 manager.ui.clear_Home();
+                manager.ui.activate_Window(0);
+                manager.ui.activate_Window(0);
                 int n = 0;
                 foreach (Anime anime in response.data.animes)
                 {
@@ -71,65 +74,6 @@ public class API : MonoBehaviour
                 Debug.LogError(apiTask.Result);
             }
         }
-    }
-    public IEnumerator GetOngoingAnime()
-    {
-        string query = @"
-        query {
-            animes(status: ""ongoing"", limit: 18, order: ranked) {
-                id
-                name
-                russian       
-                poster { originalUrl }
-            }
-        }";
-        var jsonRequest = new JObject
-        {
-            ["query"] = query
-        };
-
-        string jsonRequestStr = jsonRequest.ToString();
-
-        using (UnityWebRequest request = new UnityWebRequest(QL, "POST"))
-        {
-            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonRequestStr);
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-            request.SetRequestHeader("User-Agent", "AniTracker");
-
-            yield return request.SendWebRequest();
-
-            if(request.result == UnityWebRequest.Result.Success)
-            {
-                string jsonResponse = request.downloadHandler.text;
-                AnimeResponse response = JsonConvert.DeserializeObject<AnimeResponse>(jsonResponse);
-
-                if (response?.data?.animes != null)
-                {
-                    int n = 0;
-                    foreach (Anime anime in response.data.animes)
-                    {
-                        int localIndex = n;
-
-                        StartCoroutine(DownloadImage(anime.poster.originalUrl, sprite 
-                            =>StartCoroutine( manager.ui.Anime_to_Home(anime, sprite,localIndex))));
-                        n++;
-                        
-                    }
-                }
-                else
-                {
-                    Debug.LogError("? Не удалось извлечь список аниме из JSON.");
-                }
-                
-            }
-            else
-            {
-                Debug.LogError("? Ошибка запроса: " + request.error);
-            }
-        }
-    
     }
     public async Task<string> ToAPIAsync(string query,string url)
     {
@@ -515,18 +459,17 @@ public class API : MonoBehaviour
 
 
     //LIST
-    public async Task<List<Anime>> getList()
+    public async Task<List<Anime>> getList(string status)
     {
         int page = 1;
         List<Anime> animes = new List<Anime>();
         while (true)
         { 
-
             string query = $@"
             query {{
-                  userRates(limit: 50, page: {page}, targetType: Anime, status: completed, userId: {manager.user.id}, order: {{ field: updated_at, order: desc }}) 
+                  userRates(limit: 50, page: {page}, targetType: Anime, status: {status}, userId: {manager.user.id}, order: {{ field: updated_at, order: desc }}) 
                     {{
-                        anime {{ id russian poster{{ originalUrl  }} }}
+                        anime {{ id }}
                     }}
              }}";
             Task<string> apiTask = ToAPIAsync(query, QL);

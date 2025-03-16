@@ -9,13 +9,13 @@
 		<!-- Добавляем deep link для кастомной схемы -->
 		<activity
             android:name="com.unity3d.player.UnityPlayerActivity"
-            android:label="MOBILE2"
+            android:label="AniTracker"
             android:theme="@style/UnityThemeSelector"
             android:launchMode="singleTask">
 
 			<intent-filter>
 				<!-- Указываем схему и хост -->
-				<data android:scheme="myanimeapp" android:host="callback" />
+				<data android:scheme="AniTracker" android:host="callback" />
 				<action android:name="android.intent.action.VIEW" />
 				<category android:name="android.intent.category.DEFAULT" />
 				<category android:name="android.intent.category.BROWSABLE" />

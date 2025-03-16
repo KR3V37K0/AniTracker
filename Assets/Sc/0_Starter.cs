@@ -2,7 +2,6 @@ using System.Collections;
 using UnityEngine;
 using System;
 using System.Threading.Tasks;
-using UnityEditor.Search;
 using Newtonsoft.Json.Linq;
 using UnityEngine.Networking;
 
@@ -52,8 +51,23 @@ public class A_Starter : MonoBehaviour
     {
         manager.hasConnection=true;
         servers.SetActive(true);
-        
-        StartCoroutine(manager.api.GetOngoingAnime());
+        if (Application.isEditor)
+        {
+            servers.transform.GetChild(0).gameObject.SetActive(true);
+        }
+        else if (Application.platform == RuntimePlatform.Android)
+        {
+            servers.transform.GetChild(1).gameObject.SetActive(true);
+        }
+
+
+        //QUERY ONGOING
+        manager.ui_search.getGenres();
+        Query_Search query = new Query_Search();
+        query.status.Add("ongoing");
+        ConnectionData.currentSearch = query;
+        StartCoroutine(manager.api.SearchResult());
+        //StartCoroutine(manager.api.GetOngoingAnime());
     }
     public void noConnect()
     {

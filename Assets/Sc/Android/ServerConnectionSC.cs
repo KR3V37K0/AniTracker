@@ -8,7 +8,7 @@ public class DeepLinkHandler : MonoBehaviour
     [SerializeField] ManagerSC manager;
     private static string deepLinkURL;
 
-    void Start()
+    private void OnEnable()
     {
         Application.deepLinkActivated += OnDeepLinkActivated;
 

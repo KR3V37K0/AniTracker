@@ -13,7 +13,7 @@ public class LocalServer : MonoBehaviour
     private Thread _listenerThread;
     private ConcurrentQueue<string> authCodeQueue = new ConcurrentQueue<string>();
 
-    void Start()
+    private void OnEnable()
     {
         // Проверяем, есть ли сохраненный токен
         if (PlayerPrefs.HasKey("access_token") && PlayerPrefs.HasKey("token_expiry"))

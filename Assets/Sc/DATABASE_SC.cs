@@ -17,7 +17,7 @@ using System.Collections;
 
 public class DATABASE_SC : MonoBehaviour
 {
-    ManagerSC manager;
+    [SerializeField]ManagerSC manager;
     string conn = SetDataBaseClass.SetDataBase("DATABASE.db");
     IDbConnection dbconn;
     IDbCommand dbcmd;
@@ -31,11 +31,34 @@ public class DATABASE_SC : MonoBehaviour
         {"on_hold","îòëîæåíî"},
         {"dropped","áðîøåíî"}      
     };
-    public List<FastList> allLists= new List<FastList>();  
+
+    private Queue<Func<Task>> _queue = new Queue<Func<Task>>();
+    private bool _isRunning = false; 
+
+    //Î×ÅÐÅÄÈ
+    public void Enqueue(Func<Task> function)
+    {
+        _queue.Enqueue(function);
+        ProcessQueue(); 
+    }
+    private async void ProcessQueue()
+    {
+        if (_isRunning) return; 
+
+        _isRunning = true;
+
+        while (_queue.Count > 0)
+        {
+            Func<Task> function = _queue.Dequeue();
+            await function();
+        }
+
+        _isRunning = false;
+    }
+
 
     private void Start()
-    {
-        manager = GetComponent<ManagerSC>();
+    {   
         Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
     }
     void OpenConnection()
@@ -54,21 +77,24 @@ public class DATABASE_SC : MonoBehaviour
         dbconn = null;
     }
 
-    public List<DB_List> Get_AllLists_preview()
+
+    public async Task<List<DB_List>> Get_AllLists_preview()
     {
         OpenConnection();
 
         List<DB_List> lists = new List<DB_List>();
         Dictionary<int, DB_List> listDict = new Dictionary<int, DB_List>();
 
-        string sqlQuery = @"SELECT 
+        string sqlQuery = @$"SELECT 
                                 List.id AS list_id,
                                 List.name AS list_name,
                                 List.color AS list_color,
                                 List.place AS list_place,
                                 Anime.id AS anime_id,
                                 Anime.name AS anime_name,
-                                Anime.series AS anime_series
+                                Anime.aired AS anime_aired,
+                                Anime.""all"" AS anime_all,
+                                Link.viewed AS anime_viewed
                             FROM 
                                 List
                             LEFT JOIN 
@@ -78,7 +104,9 @@ public class DATABASE_SC : MonoBehaviour
                             LEFT JOIN 
                                 Anime 
                             ON 
-                                Link.id_Anime = Anime.id;";
+                                Link.id_Anime = Anime.id
+                            WHERE 
+                                List.id_user = {manager.user.local_id};";
         dbcmd.CommandText = sqlQuery;
         reader = dbcmd.ExecuteReader();
         while (reader.Read())
@@ -101,35 +129,55 @@ public class DATABASE_SC : MonoBehaviour
             {
                 int animeId = reader.GetInt32(4);
                 string animeName = reader.GetString(5);
-                string animeSeries = reader.GetString(6);
+                int animeAired = reader.GetInt32(6);
+                int animeAll = reader.GetInt32(7);
+                int animeViewed = reader.GetInt32(8);
 
-                DB_Anime dbAnime = new DB_Anime(animeId, animeName, animeSeries);
+                if (animeAired == 0) animeAired = animeAll;
+
+                DB_Anime dbAnime = new DB_Anime(animeId, animeName, animeAired, animeAll, animeViewed);
                 listDict[listId].animes.Add(dbAnime);
             }
         }
         //ÄÎÄÅËÀÒÜ
         CloseConnection();
         return lists;
+        //manager.ui_lists.allList=lists;
     }
 
-    public async void WriteUpdate()
+    public async Task get_currentUser()
     {
         OpenConnection();
-
-        foreach(var status in basic_List_name)
+        string sqlQuery = @$"SELECT 
+                                name,
+                                shiki
+                            FROM 
+                                Users                           
+                            WHERE 
+                                local_id = {manager.user.local_id}";
+        dbcmd.CommandText = sqlQuery;
+        reader = dbcmd.ExecuteReader();
+        while (reader.Read())
         {
-            Task<List<Anime>> apiTask = manager.api.getList(status.Key);
-            while (!apiTask.IsCompleted)
-            {
-                await apiTask;
-            }
-            FastList fast=new FastList();
-            fast.name = status.Key;
-            fast.russian = status.Value;
-            fast.animes = apiTask.Result;
+            manager.user.nickname = reader.GetString(0);
+            if(reader.GetInt32(1)!=0) manager.user.id = reader.GetInt32(1);
         }
-
-
+        CloseConnection();
+        manager.ui_settings.ViewUserInfo();
+    }
+    public async Task set_currentUser_info()
+    {
+        OpenConnection();
+        string sqlQuery = @$"UPDATE
+                                Users
+                            SET
+                                name = '{manager.user.nickname}',
+                                shiki = {manager.user.id}                          
+                            WHERE 
+                                local_id = {manager.user.local_id}";
+        dbcmd.CommandText = sqlQuery;
+        reader = dbcmd.ExecuteReader();
+        while (reader.Read()) { }
         CloseConnection();
     }
 }

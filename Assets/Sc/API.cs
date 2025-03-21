@@ -25,18 +25,17 @@ public class API : MonoBehaviour
         manager=gameObject.transform.GetComponent<ManagerSC>();
     }
 
-    public void EnterToShiki()
+    public void EnterToShiki()//do not delete
     {
-        if (Application.platform == RuntimePlatform.Android)
-        {
-            manager.androidServer.StartAuthorization();
-        }
-        else if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor)
+        if (Application.isEditor)
         {
             manager.winServer.StartAuthorization();
         }
+        else if (Application.platform == RuntimePlatform.Android)
+        {
+            manager.androidServer.StartAuthorization();
+        }
     }
-
     public IEnumerator SearchResult()
     {
         string query = ConnectionData.currentSearch.apply();
@@ -107,7 +106,7 @@ public class API : MonoBehaviour
             else
             {
                 manager.starter.noConnect();
-                Debug.LogError("Ошибка запроса: " + request.error);
+                Debug.LogError("Ошибка запроса: " + request.error+"  "+query);
                 throw new System.Exception("Ошибка запроса: " + request.error);
             }
         }
@@ -279,9 +278,8 @@ public class API : MonoBehaviour
         }
     }
     public IEnumerator DownloadImage(string url,Action<Sprite> callback)
-    {
-        
-        if (url != null)
+    {       
+        if (url != null && url!="")
         {
             using (UnityWebRequest request = UnityWebRequest.Get(url))
             {
@@ -459,17 +457,21 @@ public class API : MonoBehaviour
 
 
     //LIST
-    public async Task<List<Anime>> getList(string status)
+    public async Task<List<DB_Anime>> getList(string status)
     {
+        
         int page = 1;
-        List<Anime> animes = new List<Anime>();
+        List<DB_Anime> animes = new List<DB_Anime>();
+        
         while (true)
         { 
             string query = $@"
             query {{
                   userRates(limit: 50, page: {page}, targetType: Anime, status: {status}, userId: {manager.user.id}, order: {{ field: updated_at, order: desc }}) 
                     {{
-                        anime {{ id }}
+                        id
+                        anime {{ id russian episodes episodesAired}}
+                        episodes
                     }}
              }}";
             Task<string> apiTask = ToAPIAsync(query, QL);
@@ -477,14 +479,15 @@ public class API : MonoBehaviour
             {
                 await Task.Yield();
             }
-            Debug.Log(apiTask.Result);
+           // Debug.Log(apiTask.Result);
+
             detailResponse respo = JsonConvert.DeserializeObject<detailResponse>(apiTask.Result.ToString());
-            List<UserRate> animeList = respo.data.userRates;
+            List<respo_list> animeList = respo.data.userRates;
 
 
-            foreach (UserRate r in animeList)
+            foreach (respo_list r in animeList)
             {
-                animes.Add(r.anime);
+                animes.Add(new DB_Anime(int.Parse(r.anime.id),r.anime.russian,r.anime.episodesAired,r.anime.episodes,r.episodes));
             }
             if (animeList.Count < 50) 
             {
@@ -493,5 +496,6 @@ public class API : MonoBehaviour
             page++;
         }
     }
+
 }
 

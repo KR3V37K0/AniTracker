@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -30,6 +31,25 @@ public class ShikimoriUser
     public int id;
     public string nickname;
     public string avatar;
+    public Sprite sprite;
+    public int local_id;
+    public image_x image { get; set; }
+    public ShikimoriUser(string nickname, int local_id)
+    {
+        this.nickname = nickname;
+        this.local_id = local_id;
+    }
+
+}
+public class image_x
+{
+    public string x160 { get; set; }
+    public string x148 { get; set; }
+    public string x80 { get; set; }
+    public string x64 { get; set; }
+    public string x48 { get; set; }
+    public string x32 { get; set; }
+    public string x16 { get; set; }
 }
 //ANIME
 public class AnimeImage
@@ -44,6 +64,10 @@ public class Anime
     public string russian;
     public AnimeImage poster;
     public Sprite sprite;
+    public Anime(string id)
+    {
+        this.id = id;
+    }
 }
 public class SimilarAnime
 {
@@ -61,11 +85,7 @@ public class Data
 {
     public List<AnimeDetails> animes;
     public List<GenreData> genres;
-    public List<UserRate> userRates;
-}
-public class UserRate
-{
-    public Anime anime;
+    public List<respo_list> userRates;
 }
 public class GenreData
 {
@@ -153,28 +173,7 @@ public class Series
 
 }
 
-public class FastList
-{
-    public string id_list,name,russian;
-    public List<Anime> animes;
-}
-public class DB_Anime
-{
-    public int id;
-    public string name;
-    public Series series;
-    public DB_Anime(int id, string name, string series)
-    {
-        this.id = id;
-        this.name = name;
 
-        this.series=new Series();
-        string[] parts = series.Split('/');
-        this.series.viewved = int.Parse(parts[0]);
-        this.series.aired = int.Parse(parts[1]);
-        this.series.all = int.Parse(parts[2]);
-    }
-}
 public class DB_List
 {
     public int id;
@@ -196,9 +195,40 @@ public class DB_Link
     public int id_Anime;
     public int id_List;
 }
+public class DB_Anime
+{
+    public int id { get; set; }
+    public string name { get; set; }
+    public int aired { get; set; } // Количество вышедших серий
+    public int all { get; set; }   // Общее количество серий
+    public int viewed { get; set; } // Количество просмотренных серий
+    public DB_Anime(int id, string name, int aired, int all, int viewed)
+    {
+        this.id = id;
+        this.name = name;
+        this.aired = aired;
+        this.all = all;
+        this.viewed = viewed;
+    }
+}
+public class respo_list
+{
+    public string id;
+    public respo_list_Anime anime;
+    public int episodes;
+    public class respo_list_Anime
+    {
+        public string id;
+        public string russian;
+        public int episodes;
+        public int episodesAired;
+    }
 
-//API
-public class Query_Search
+}
+
+
+    //API
+    public class Query_Search
 {
     public string search, mylist, excludeids, franchise,season,order= "ranked",censure="true";
     public float score=1;
@@ -319,4 +349,7 @@ public class Query_Search
         if (title != "") title = char.ToUpper(title[0]) + title.Substring(1);
     }
 }
+
+
+
 

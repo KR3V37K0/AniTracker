@@ -7,16 +7,15 @@ using TMPro;
 
 public class UI_Settings : MonoBehaviour
 {
-    ManagerSC manager;
+    [SerializeField] ManagerSC manager;
     [SerializeField] GameObject popupEnter,viewer;
     [SerializeField] Image img_Ava;
-    [SerializeField] TMP_Text txt_name;
+    [SerializeField] TMP_Text txt_name,txt_id;
     [SerializeField] Button btn_Enter;
     [SerializeField] string URL_Rules;
     private void Start()
     {
-        manager = GetComponent<ManagerSC>();
-        viewer.SetActive(false);
+        //viewer.SetActive(false);
     }
     public void show_popupEnter()
     {
@@ -29,11 +28,20 @@ public class UI_Settings : MonoBehaviour
     {
         Application.OpenURL(URL_Rules);
     }
-    public void ViewUserInfo()
+    public void off_btn_Enter()
     {
-        if(manager.user.avatar!=null)   manager.api.DownloadImage(manager.user.avatar, (img) => img_Ava.sprite = img);
+        btn_Enter.interactable = false;
+    }
+    public void ViewUserInfo()
+    {      
+        if ((manager.user.image!=null))  StartCoroutine( manager.api.DownloadImage(manager.user.image.x160, (img) => 
+            { 
+                img_Ava.sprite = img;
+                manager.user.sprite = img;
+            }));
         txt_name.text = manager.user.nickname;
+        txt_id.text = manager.user.id+"";
         viewer.SetActive(true);
-        btn_Enter.interactable=false;
+        if (manager.user.id != 0) off_btn_Enter();
     }
 }

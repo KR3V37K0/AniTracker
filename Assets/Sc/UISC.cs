@@ -146,20 +146,21 @@ public class UISC : MonoBehaviour
     }
     public void but_ViewDetails(GameObject i,Anime anime)
     {
-        StartLoad();
-        //animation
-        Sequence.Create(cycles: 1)
-            .Group(Tween.Scale(i.transform, 0.9f, 0.2f))
-            .Group(Tween.Color(i.transform.Find("poster/img").GetComponent<Image>(), Color.gray, 0.2f))
-            .Chain(Tween.Scale(i.transform, 1f, 0.2f))
-            .Group(Tween.Color(i.transform.Find("poster/img").GetComponent<Image>(), Color.white, 0.2f))
-            .ChainCallback(() => details.SetActive(true))
-            .ChainCallback(()=>active=5)
-            .ChainCallback(() => activate_Window(0));
+        if (manager.hasConnection)
+        {
+            StartLoad();
+            //animation
+            Sequence.Create(cycles: 1)
+                .Group(Tween.Scale(i.transform, 0.9f, 0.2f))
+                .Group(Tween.Color(i.transform.Find("poster/img").GetComponent<Image>(), Color.gray, 0.2f))
+                .Chain(Tween.Scale(i.transform, 1f, 0.2f))
+                .Group(Tween.Color(i.transform.Find("poster/img").GetComponent<Image>(), Color.white, 0.2f))
+                .ChainCallback(() => details.SetActive(true))
+                .ChainCallback(() => active = 5)
+                .ChainCallback(() => activate_Window(0));
 
-        StartCoroutine(manager.api.getDetails(anime));
-            
-        
+            StartCoroutine(manager.api.getDetails(anime));
+        }    
     }
 
     public IEnumerator Anime_to_Home(Anime Data,Sprite sprite,int number)
@@ -176,7 +177,7 @@ public class UISC : MonoBehaviour
 
         yield return null;   
     }
-    private void sort_children(Transform parent)
+    public void sort_children(Transform parent)
     {
         foreach (Transform child in parent)
         {
@@ -349,12 +350,12 @@ public class UISC : MonoBehaviour
         ReloadContainer(arr_screens.gameObject);
         slot.sprite = getSprite();
     }
-    void ReloadContainer(GameObject container)
+    public void ReloadContainer(GameObject container)
     {
         LayoutRebuilder.ForceRebuildLayoutImmediate(container.GetComponent<RectTransform>());
         //container.transform.localScale = new Vector3(1.01f, 1.01f, 1f);
     }
-    void DeleteChildren(Transform parent)
+    public void DeleteChildren(Transform parent)
     {
         foreach (Transform child in parent)
         {

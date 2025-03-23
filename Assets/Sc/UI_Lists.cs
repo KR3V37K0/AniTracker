@@ -6,6 +6,7 @@ using TMPro;
 using static System.Net.Mime.MediaTypeNames;
 using System.Threading.Tasks;
 using System.Linq;
+using UnityEditor.VersionControl;
 
 public class UI_Lists : MonoBehaviour
 {
@@ -22,36 +23,45 @@ public class UI_Lists : MonoBehaviour
     }
     public IEnumerator setup_allList()
     {
+        Debug.Log("online " + hasOnline); Debug.Log("offline " + hasOffline);
+
         if (hasOnline == false) yield return StartCoroutine(get_Online());
         if (hasOffline == false) yield return StartCoroutine(get_Offline());
-        Debug.Log("online " + hasOnline); Debug.Log("offline " + hasOffline);
+
         yield return null;
     }
     IEnumerator get_Online()
-    {
-
+    {    
         //ONLINE LISTS
-        if (manager.hasConnection && manager.user.id != 0)
+        if ((manager.hasConnection) && (manager.user.id != 0))
         {
             foreach (string s in manager.db.basic_List_name.Keys)
             {
-                Task<List<DB_Anime>> apiTask = manager.api.getList(s);
+                Task<List<DB_Anime>> apiTask= apiTask = manager.api.getList(s);
+
                 while (!apiTask.IsCompleted)
                 {
-                    yield return new WaitForEndOfFrame();
+                    yield return new WaitForSeconds(0.1f);
+                    if (apiTask.IsFaulted)
+                    {
+                        Debug.LogError("Задача завершена с ошибкой: " + apiTask.Exception.Message);
+                        yield return new WaitForSeconds(0.3f);
+                        apiTask = manager.api.getList(s);
+                    }
                 }
-                DB_List current = new DB_List(0, manager.db.basic_List_name[s], Color.white,manager.db.basic_List_name.Keys.ToList().IndexOf(s));
+                DB_List current = new DB_List(0, manager.db.basic_List_name[s], Color.white, manager.db.basic_List_name.Keys.ToList().IndexOf(s));
+
                 current.animes = apiTask.Result;
+                allList.Add(current);
             }
             hasOnline = true;
             firstOpen = true;
-
+            manager.starter.getOngoing();
         }
         yield return null;
     }
     IEnumerator get_Offline()
     {
-
         //OFFLINE LISTS
         Task<List<DB_List>> dbTask = manager.db.Get_AllLists_preview();
         while (!dbTask.IsCompleted)

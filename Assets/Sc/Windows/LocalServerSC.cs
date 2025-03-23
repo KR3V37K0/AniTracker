@@ -15,6 +15,7 @@ public class LocalServer : MonoBehaviour
 
     private void OnEnable()
     {
+        Debug.Log("server on");
         // Проверяем, есть ли сохраненный токен
         if (PlayerPrefs.HasKey("access_token") && PlayerPrefs.HasKey("token_expiry"))
         {
@@ -157,6 +158,7 @@ public class LocalServer : MonoBehaviour
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string json = request.downloadHandler.text;
+                Debug.Log(json);    
                 ConnectionData.TOKEN = JsonUtility.FromJson<ConnectionData.TokenResponse>(json);
 
                 PlayerPrefs.SetString("access_token", ConnectionData.TOKEN.access_token);

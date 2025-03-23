@@ -14,6 +14,7 @@ public class A_Starter : MonoBehaviour
     [SerializeField] GameObject servers;
     private void Awake()
     {
+        PlayerPrefs.DeleteAll();
         StartSequence();
     }
     async void StartSequence()

@@ -492,7 +492,8 @@ public class API : MonoBehaviour
             if (animeList.Count < 50) 
             {
                 return animes;
-            }           
+            }
+            await Task.Delay(100);
             page++;
         }
     }

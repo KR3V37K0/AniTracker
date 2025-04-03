@@ -37,5 +37,5 @@ public class ConnectionData:MonoBehaviour
         PlayerPrefs.Save();
         OnUserAuthenticated?.Invoke();
     }
-
+    
 }

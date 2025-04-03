@@ -27,7 +27,7 @@ public class UISC : MonoBehaviour
 [Header("---HOME--")]
     public string onHome;
     [SerializeField] Transform home_slot;
-    [SerializeField] GameObject panelAnime;
+    [SerializeField] GameObject panelAnime,obj_tags,obj_tag;
     [SerializeField] TMP_Text txt_SearchTitle;
 
 [Header("---DETAILS--")]
@@ -175,6 +175,23 @@ public class UISC : MonoBehaviour
         anime.SetSiblingIndex(number);
         sort_children(home_slot);
 
+
+        List<int> index = manager.ui_lists.FindAnimeInLists(int.Parse(Data.id));
+        if(index.Count > 0)
+        {
+            Transform tags = null;
+            Transform field = null;
+            foreach (int i in index)
+            {
+                if (tags == null) tags = Instantiate(obj_tags.transform, anime);
+                if (field == null) field = tags.Find("tag_field").transform;
+                Instantiate(obj_tag, field).GetComponent<Image>().color = manager.ui_lists.allList[i].color;
+                if (i == index[index.Count-1]) tags.GetComponentInChildren<TMP_Text>().text = manager.ui_lists.allList[i].name;
+
+            }
+        }
+
+
         yield return null;   
     }
     public void sort_children(Transform parent)
@@ -199,6 +216,7 @@ public class UISC : MonoBehaviour
     }
     public void ViewDetails(AnimeDetails details)
     {
+        manager.ui_lists.currentAnime=details;
         StopLoad();
         //Loader on BIG Lists
         DeleteChildren(arr_related);
@@ -209,6 +227,7 @@ public class UISC : MonoBehaviour
         //List BUTT
         btn_Details_List.onClick.RemoveAllListeners();
         btn_Details_List.onClick.AddListener(() => butt_Anime_in_List(details.main.id));
+        manager.ui_lists.set_ToggleFor(int.Parse(details.main.id));
 
         //MAIN
         txt_name.text = details.main.russian;
@@ -222,14 +241,6 @@ public class UISC : MonoBehaviour
         txt_status.text=details.status;
         txt_year.text=details.airedOn.date;
 
-        //GENRES
-        /*txt_genres.text = "";
-        txt_themes.text = "";
-        foreach(Genre g in details.genres)
-        {
-            if (g.kind == "genre") txt_genres.text += g.russian + "   ";
-            else if (g.kind == "theme") txt_themes.text += g.russian + "   ";
-        }*/
         DeleteChildren(txt_genres.transform);
         DeleteChildren(txt_themes.transform);
         foreach (Genre g in details.genres)

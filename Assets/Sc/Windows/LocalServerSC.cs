@@ -15,7 +15,10 @@ public class LocalServer : MonoBehaviour
 
     private void OnEnable()
     {
-        Debug.Log("server on");
+        reStart();
+    }
+    void reStart()
+    {
         // Проверяем, есть ли сохраненный токен
         if (PlayerPrefs.HasKey("access_token") && PlayerPrefs.HasKey("token_expiry"))
         {
@@ -41,6 +44,10 @@ public class LocalServer : MonoBehaviour
         if (PlayerPrefs.GetInt("authorization_shown", 0) == 0)
         {
             PanelAuthorize();
+        }
+        else
+        {
+            manager.starter.withoutOnlineUser();
         }
     }
 

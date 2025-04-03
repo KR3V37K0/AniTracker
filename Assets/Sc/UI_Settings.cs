@@ -24,6 +24,10 @@ public class UI_Settings : MonoBehaviour
             .ChainCallback(() => popupEnter.SetActive(true))
             .Chain(Tween.Scale(popupEnter.transform, 1f, 0.3f));
     }
+    public void btn_discardUser()
+    {
+        manager.starter.withoutOnlineUser();
+    }
     public void btn_openRules()
     {
         Application.OpenURL(URL_Rules);

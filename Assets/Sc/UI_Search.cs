@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Linq;
 using UnityEngine.Analytics;
+using System;
 
 public class UI_Search : MonoBehaviour
 {
     ManagerSC manager;
     [SerializeField] GameObject container;
-    [SerializeField] GameObject obj_checkbox;
+    [SerializeField] GameObject obj_checkbox, obj_pan_list, list_container;
+    [SerializeField] Sprite[] triple_check;
 
     [Header("----Genres and Themes----")]
     [SerializeField] Transform view_Genres;
@@ -22,6 +24,8 @@ public class UI_Search : MonoBehaviour
 
     bool splited_GaT;
     Query_Search query = new Query_Search();
+
+
 
     private void Start()
     {
@@ -160,6 +164,90 @@ public class UI_Search : MonoBehaviour
         else query.genre.Remove(genresList.Find(genre => genre.id == name));
     }
     //LIST
+    public void fill_List_toSearch()
+    {
+        manager.ui.DeleteChildren(list_container.transform);
+        foreach(DB_List list in manager.ui_lists.allList)
+        {
+            GameObject obj = Instantiate(obj_pan_list, list_container.transform);
+            obj.name = list.place+"";
+            if(list.id == 0) obj.transform.Find("txt").name = manager.db.basic_List_name.FirstOrDefault(x => x.Value == list.name).Key;
+            obj.GetComponentInChildren<TMP_Text>().text = list.name;
+            obj.GetComponentInChildren<Button>().onClick.AddListener(() => switch_list_check(obj));
 
+        }
+        manager.ui.sort_children(list_container.transform);
+    }
+    public void switch_list_check(GameObject obj)
+    {
+        int i = int.Parse(obj.transform.GetChild(1).name)+1;
+        if (i > 2)
+        {
+            i = 0;
+            obj.transform.GetChild(1).GetChild(0).gameObject.SetActive(false);
+        }
+        else 
+        { 
+            obj.transform.GetChild(1).GetChild(0).GetComponent<Image>().sprite = triple_check[i];
+            obj.transform.GetChild(1).GetChild(0).gameObject.SetActive(true);
+        }
+        obj.transform.GetChild(1).name = i + "";
+
+        if (obj.transform.GetChild(0).name != "txt")
+            ProcessListString(obj.transform.GetChild(0).name, i);
+
+    }
+    void ProcessListString(string listName, int operation)
+    {
+        if (string.IsNullOrEmpty(query.mylist))
+        {
+            // Если строка пустая, обрабатываем особо
+            switch (operation)
+            {
+                case 1:
+                    query.mylist = listName;
+                    break;
+                case 2:
+                    query.mylist = $"!{listName}";
+                    break;
+            }
+            Debug.Log("mylist: " + query.mylist);
+            return;
+        }
+
+        // Разделяем строку на отдельные списки
+        var lists = query.mylist.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                               .Select(x => x.Trim())
+                               .ToList();
+
+        // Обработка в зависимости от операции
+        switch (operation)
+        {
+            case 0: // Удалить список
+                lists.RemoveAll(x => x.Equals(listName) || x.Equals($"!{listName}"));
+                break;
+
+            case 1: // Добавить список
+                if (!lists.Contains(listName) && !lists.Contains($"!{listName}"))
+                {
+                    lists.Add(listName);
+                }
+                break;
+
+            case 2: // Добавить/модифицировать список с "!"
+                    // Удаляем обычную версию, если есть
+                lists.RemoveAll(x => x.Equals(listName));
+
+                // Добавляем версию с "!" (если еще нет)
+                string excludedList = $"!{listName}";
+                if (!lists.Contains(excludedList))
+                {
+                    lists.Add(excludedList);
+                }
+                break;
+        }
+
+        query.mylist = string.Join(", ", lists);
+    }
 
 }

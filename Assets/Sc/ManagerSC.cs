@@ -210,6 +210,10 @@ public class DB_Anime
         this.all = all;
         this.viewed = viewed;
     }
+    public DB_Anime(int id)
+    {
+        this.id = id;
+    }
 }
 public class respo_list
 {
@@ -226,129 +230,146 @@ public class respo_list
 
 }
 
+public class Changes
+{
+    public int list_id;
+    public string status;//delete, update, create
+    public DB_Anime anime;
+    public Changes(int id,string status, DB_Anime anime)
+    {
+        this.list_id = id;
+        this.status = status;
+        this.anime = anime;
+    }
+    public Changes()
+    {
+
+    }
+}
+
 
     //API
     public class Query_Search
-{
-    public string search, mylist, excludeids, franchise,season,order= "ranked",censure="true";
-    public float score=1;
-    public int page=1;
-    public List<string>kind=new List<string>();
-    public List<GenreData> genre = new List<GenreData>();
-    public List<string> status = new List<string>();
-    public List<string> rating = new List<string>();
-
-    public string title = "";
-    public string genre_title="";
-    public string apply()
     {
-        generate_title();
+        public string search, mylist="", excludeids, franchise,season,order= "ranked",censure="true";
+        public float score=1;
+        public int page=1;
+        public List<string>kind=new List<string>();
+        public List<GenreData> genre = new List<GenreData>();
+        public List<string> status = new List<string>();
+        public List<string> rating = new List<string>();
 
-        string query = $@"
-        query {{
-              animes(limit: 18 ";
-
-        query += $@", page: {page}";
-        query += $@", search: ""{search}""";
-        if (status.Count > 0)  query += $@", status: ""{List_toString(status)}""";
-        if (kind.Count>0) query += $@", kind: ""{List_toString(kind)}""";
-        if (genre.Count > 0) query += $@", genre: ""{Genres_toString()}""";
-        if (mylist != null) query += $@", mylist: ""{mylist}""";
-        if (franchise != null) query += $@", excludeIds: ""{franchise}""";
-        query += $@", score: {score}";
-        if (season != null) query += $@", season: ""{season}""";
-        if (rating.Count >0) query += $@", rating: ""{List_toString(rating)}""";
-        query += $@", order: {order}";
-
-        query +=$@", censored: {censure}) 
-                    {{
-                        id
-                        name
-                        russian
-                        poster {{ originalUrl }}
-                    }}                
-             }}";
-        return query;
-    }
-    public string List_toString(List<string>list) 
-    {
-        string s="";
-        foreach (string item in list)
+        public string title = "";
+        public string genre_title="";
+        public string apply()
         {
-            s += item + ",";
+            generate_title();
+
+            string query = $@"
+            query {{
+                  animes(limit: 18 ";
+
+            query += $@", page: {page}";
+            query += $@", search: ""{search}""";
+            if (status.Count > 0)  query += $@", status: ""{List_toString(status)}""";
+            if (kind.Count>0) query += $@", kind: ""{List_toString(kind)}""";
+            if (genre.Count > 0) query += $@", genre: ""{Genres_toString()}""";
+            if (mylist != null && mylist!="") query += $@", mylist: ""{mylist}""";
+            if (franchise != null) query += $@", excludeIds: ""{franchise}""";
+            query += $@", score: {score}";
+            if (season != null) query += $@", season: ""{season}""";
+            if (rating.Count >0) query += $@", rating: ""{List_toString(rating)}""";
+            query += $@", order: {order}";
+
+            query +=$@", censored: {censure}) 
+                        {{
+                            id
+                            name
+                            russian
+                            poster {{ originalUrl }}
+                        }}                
+                 }}";
+            return query;
         }
-        s = s.Remove(s.Length - 1);
-        return s;
-    }
-    string Genres_toString() 
-    {
-        string s="";
-        foreach(GenreData g in genre)
+        public string List_toString(List<string>list) 
         {
-            s += g.id + ",";
-        }
-        s = s.Remove(s.Length - 1);
-        return s;
-    }
-    void generate_title()
-    {
-        title = "";
-
-        if (status.Count == 1)
-        {
-            switch (status[0])
+            string s="";
+            foreach (string item in list)
             {
-                case "anons":
-                    title += "анонсирован ";
-                    break;
-                case "ongoing":
-                    title += "сейчас выходит ";
-                    break;
-                case "released":
-                    title += "уже вышел ";
-                    break;
+                s += item + ",";
             }
+            s = s.Remove(s.Length - 1);
+            return s;
         }
-        if (kind.Count == 1)
+        string Genres_toString() 
         {
-            switch (kind[0])
+            string s="";
+            foreach(GenreData g in genre)
             {
-                case "movie":
-                    title += "фильм ";
-                    break;
-                case "tv":
-                    title += "сериал ";
-                    break;
-                case "ona":
-                    title += "ona ";
-                    break;
-                case "ova":
-                    title += "ova ";
-                    break;
-                case "special,tv_special":
-                    title += "спешл ";
-                    break;
-                case "music":
-                    title += "музыка ";
-                    break;
-                case "pv":
-                    title += "промо ";
-                    break;
+                s += g.id + ",";
             }
+            s = s.Remove(s.Length - 1);
+            return s;
         }
-
-        if (search != null)
-        { 
-            if(search!="")  title += "'" + search + "'"; 
-        }
-        else if(genre.Count == 1)
+        void generate_title()
         {
-            title += genre_title + " ";
-        }
+            title = "";
 
-        if (title != "") title = char.ToUpper(title[0]) + title.Substring(1);
+            if (status.Count == 1)
+            {
+                switch (status[0])
+                {
+                    case "anons":
+                        title += "анонсирован ";
+                        break;
+                    case "ongoing":
+                        title += "сейчас выходит ";
+                        break;
+                    case "released":
+                        title += "уже вышел ";
+                        break;
+                }
+            }
+            if (kind.Count == 1)
+            {
+                switch (kind[0])
+                {
+                    case "movie":
+                        title += "фильм ";
+                        break;
+                    case "tv":
+                        title += "сериал ";
+                        break;
+                    case "ona":
+                        title += "ona ";
+                        break;
+                    case "ova":
+                        title += "ova ";
+                        break;
+                    case "special,tv_special":
+                        title += "спешл ";
+                        break;
+                    case "music":
+                        title += "музыка ";
+                        break;
+                    case "pv":
+                        title += "промо ";
+                        break;
+                }
+            }
+
+            if (search != null)
+            { 
+                if(search!="")  title += "'" + search + "'"; 
+            }
+            else if(genre.Count == 1)
+            {
+                title += genre_title + " ";
+            }
+
+            if (title != "") title = char.ToUpper(title[0]) + title.Substring(1);
+        }
     }
-}
 
 
 

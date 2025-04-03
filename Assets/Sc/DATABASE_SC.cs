@@ -14,6 +14,8 @@ using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using System.Threading.Tasks;
 using System.Collections;
+using UnityEngine.PlayerLoop;
+using UnityEngine.Assertions;
 
 public class DATABASE_SC : MonoBehaviour
 {
@@ -113,7 +115,10 @@ public class DATABASE_SC : MonoBehaviour
         {
             int listId = reader.GetInt32(0);
             string listName = reader.GetString(1);
-            Color listColor = Color.white; // Предположим, что цвет хранится как строка
+
+            string[] col = reader.GetString(2).Split('/');
+            Color listColor = Color.HSVToRGB(float.Parse(col[0]), float.Parse(col[1]), float.Parse(col[2]));
+
             int listPlace = reader.GetInt32(3);
 
             // Если список с таким id ещё не добавлен, создаём его
@@ -178,6 +183,73 @@ public class DATABASE_SC : MonoBehaviour
         dbcmd.CommandText = sqlQuery;
         reader = dbcmd.ExecuteReader();
         while (reader.Read()) { }
+        CloseConnection();
+    }
+
+    public async Task save_Lists(List<Changes>changes)
+    {
+        foreach (Changes change in changes)
+        {
+            if (change.list_id >= 6)
+            {
+                
+                string sqlQuery = "";
+                switch (change.status)
+                {
+                    case "delete DB"://OK
+                        sqlQuery = @$"DELETE FROM 
+                                                Link
+                                            WHERE
+                                                id_Anime={change.anime.id}";
+                                                
+                        break;
+
+
+                    case "update":
+                        sqlQuery = @$"UPDATE Link SET viewed = {change.anime.viewed} WHERE id_Anime = {change.anime.id} AND id_List = {change.list_id}";
+                        Debug.Log("update DB");
+                        break;
+
+
+                    case "create":
+                        sqlQuery = @$"INSERT INTO Link(id_Anime, id_List, viewed) VALUES({change.anime.id}, {change.list_id}, {change.anime.viewed})";
+                        if (manager.ui_lists.FindAnimeInLists(change.anime.id).Count == 0) await createAnime(change.anime);
+                        Debug.Log("create DB "+change.anime.name);
+                        break;
+
+                    default:
+                        Debug.LogError(@$"неизвестный статус для сохранения в БД: {change.anime.name} {change.status}");
+                        break;
+                }
+                OpenConnection();
+                dbcmd.CommandText = sqlQuery;
+                reader = dbcmd.ExecuteReader();
+
+                while (reader.Read()) 
+                { 
+
+                }
+
+
+                CloseConnection();
+            }
+        }
+        Debug.Log("...saving offline lists");
+    }
+    async Task createAnime(DB_Anime anime)
+    {
+        Debug.Log("create new anime "+anime.name);
+        OpenConnection();
+
+        string sqlQuery = @$"INSERT INTO Anime(id, name, aired, all) VALUES({anime.id}, {anime.name}, {anime.aired},{anime.all})";
+        dbcmd.CommandText = sqlQuery;
+        reader = dbcmd.ExecuteReader();
+
+        while (reader.Read())
+        {
+
+        }
+
         CloseConnection();
     }
 }

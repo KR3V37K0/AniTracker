@@ -37,6 +37,10 @@ public class DeepLinkHandler : MonoBehaviour
         {
             PanelAuthorize();
         }
+        else
+        {
+            manager.starter.withoutOnlineUser();
+        }
     }
 
     void PanelAuthorize()

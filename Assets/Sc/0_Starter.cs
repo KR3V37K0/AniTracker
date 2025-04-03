@@ -14,7 +14,6 @@ public class A_Starter : MonoBehaviour
     [SerializeField] GameObject servers;
     private void Awake()
     {
-        PlayerPrefs.DeleteAll();
         StartSequence();
     }
     async void StartSequence()
@@ -81,6 +80,7 @@ public class A_Starter : MonoBehaviour
         {
             servers.transform.GetChild(1).gameObject.SetActive(true);
         }
+        
 
     }
     public void noConnect()
@@ -95,9 +95,32 @@ public class A_Starter : MonoBehaviour
     {
         StartCoroutine(GetUserInfo_IENUM(0));
     }
+    bool waitOnline = true;
+    public void withoutOnlineUser()//связан с *servers
+    {
+        if (waitOnline)
+        {
+            waitOnline = false;
+            StartCoroutine(withoutAutentify());
+        }
+        
+    }
+    IEnumerator withoutAutentify()
+    {
+        Debug.Log("используем локального юзера");
+        while (true)
+        {
+            if(manager.hasConnection && manager.user.id>0 && manager.ui_lists.hasOffline)
+            {
+                getOngoing();
+                manager.ui_lists.fill_toList_panel();
+                break;
+            }
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
     IEnumerator GetUserInfo_IENUM(int tick)
     {
-        Debug.Log("get online info");
         if (manager.hasConnection)
         {
 
@@ -124,6 +147,7 @@ public class A_Starter : MonoBehaviour
                     //СКАЧАТЬ СПИСКИ ОНЛАЙН
                     StartCoroutine(manager.ui_lists.setup_allList());
                     manager.ui_settings.ViewUserInfo();
+                    StopCoroutine(withoutAutentify());
 
                     //delete
                     // manager.db.WriteUpdate();

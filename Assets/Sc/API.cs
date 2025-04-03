@@ -19,6 +19,7 @@ public class API : MonoBehaviour
     private string Similar = "https://shikimori.one/api/animes/id/similar";
     private string url_Images = "https://shikimori.one";
     private const int BatchSize = 19;
+    public int querys = 0;
 
     void Start()
     {
@@ -76,6 +77,7 @@ public class API : MonoBehaviour
     }
     public async Task<string> ToAPIAsync(string query,string url)
     {
+        querys++;
         var jsonRequest = new JObject
         {
             ["query"] = query
@@ -427,6 +429,7 @@ public class API : MonoBehaviour
     }
     public async Task<List<GenreData>> Get_GenresList()
     {
+        await Task.Delay(1);
         string query = @"
         query {
             genres(entryType: Anime) {
@@ -496,6 +499,10 @@ public class API : MonoBehaviour
             await Task.Delay(100);
             page++;
         }
+    }
+    public async Task save_onlineList(List<Changes> changes)
+    {
+        Debug.Log("...saving online lists");
     }
 
 }

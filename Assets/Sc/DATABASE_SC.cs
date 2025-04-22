@@ -24,6 +24,7 @@ public class DATABASE_SC : MonoBehaviour
     IDbConnection dbconn;
     IDbCommand dbcmd;
     IDataReader reader;
+    int writer;
     public Dictionary<string,string> basic_List_name = new Dictionary<string, string>()
     {
         {"planned","запланировано"},
@@ -71,8 +72,13 @@ public class DATABASE_SC : MonoBehaviour
     }
     void CloseConnection()
     {
-        reader.Close();
-        reader = null;
+        dbcmd.Parameters.Clear();
+        if (reader != null)
+        {
+            reader.Close();
+            reader = null;
+        }
+
         dbcmd.Dispose();
         dbcmd = null;
         dbconn.Close();
@@ -95,7 +101,7 @@ public class DATABASE_SC : MonoBehaviour
                                 Anime.id AS anime_id,
                                 Anime.name AS anime_name,
                                 Anime.aired AS anime_aired,
-                                Anime.""all"" AS anime_all,
+                                Anime.""all_ep"" AS anime_all_ep,
                                 Link.viewed AS anime_viewed
                             FROM 
                                 List
@@ -190,9 +196,10 @@ public class DATABASE_SC : MonoBehaviour
     {
         foreach (Changes change in changes)
         {
+            Debug.Log(change.list_id+" "+change.status);
             if (change.list_id >= 6)
             {
-                
+                int real_id = change.list_id - 5;
                 string sqlQuery = "";
                 switch (change.status)
                 {
@@ -206,14 +213,23 @@ public class DATABASE_SC : MonoBehaviour
 
 
                     case "update":
-                        sqlQuery = @$"UPDATE Link SET viewed = {change.anime.viewed} WHERE id_Anime = {change.anime.id} AND id_List = {change.list_id}";
+                        sqlQuery = @$"UPDATE Link SET viewed = {change.anime.viewed} WHERE id_Anime = {change.anime.id} AND id_List = {real_id}";
                         Debug.Log("update DB");
                         break;
 
 
                     case "create":
-                        sqlQuery = @$"INSERT INTO Link(id_Anime, id_List, viewed) VALUES({change.anime.id}, {change.list_id}, {change.anime.viewed})";
-                        if (manager.ui_lists.FindAnimeInLists(change.anime.id).Count == 0) await createAnime(change.anime);
+                        sqlQuery = @$"INSERT INTO Link(id_Anime, id_List, viewed) VALUES({change.anime.id}, {real_id}, {change.anime.viewed})";
+                        //if (manager.ui_lists.FindAnimeInLists(change.anime.id).Count == 0) await createAnime(change.anime);
+                        Debug.Log(manager.ui_lists.FindAnimeInLists(change.anime.id).Count+" count Finder");
+                        try
+                        {
+                            await createAnime(change.anime);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError("Ошибка при добавлении аниме: " + ex.Message);
+                        }
                         Debug.Log("create DB "+change.anime.name);
                         break;
 
@@ -223,12 +239,12 @@ public class DATABASE_SC : MonoBehaviour
                 }
                 OpenConnection();
                 dbcmd.CommandText = sqlQuery;
-                reader = dbcmd.ExecuteReader();
+                //reader = dbcmd.ExecuteReader();
 
-                while (reader.Read()) 
-                { 
+                writer = dbcmd.ExecuteNonQuery();
 
-                }
+                if (writer > 0)
+                    Debug.Log("Запись успешно добавлена!");
 
 
                 CloseConnection();
@@ -238,18 +254,43 @@ public class DATABASE_SC : MonoBehaviour
     }
     async Task createAnime(DB_Anime anime)
     {
-        Debug.Log("create new anime "+anime.name);
+        Debug.Log("create new anime in DATABASE "+anime.name+" "+anime.id);
         OpenConnection();
 
-        string sqlQuery = @$"INSERT INTO Anime(id, name, aired, all) VALUES({anime.id}, {anime.name}, {anime.aired},{anime.all})";
+        //string sqlQuery = @$"INSERT INTO Anime(id, name, aired, all) VALUES({anime.id}, {anime.name}, {anime.aired},{anime.all})";
+
+        string sqlQuery = @$"INSERT INTO Anime(id, name, aired, all_ep) VALUES({anime.id}, ""{anime.name}"", {anime.aired},{anime.all})";
+        dbcmd.CommandText = sqlQuery;
+
+        //dbcmd.CommandText = sqlQuery;
+        //reader = dbcmd.ExecuteReader();
+        writer = dbcmd.ExecuteNonQuery();
+
+        if (writer > 0)
+            Debug.Log("Запись ОБ АНИМЕ успешно добавлена!");
+
+
+        CloseConnection();
+    }
+
+    public async Task get_Tracking()
+    {
+        OpenConnection();
+        string sqlQuery = @$"SELECT 
+                                id_Anime,
+                                1s_Date,
+                                all_ep
+                            FROM 
+                                Track";
         dbcmd.CommandText = sqlQuery;
         reader = dbcmd.ExecuteReader();
-
+        List<Tracker> trackers = new List<Tracker>();
         while (reader.Read())
         {
+            Tracker track = new Tracker(reader.GetInt32(0), DateTime.Parse(reader.GetString(1)), reader.GetInt32(2));
+            trackers.Add(track);
 
         }
-
         CloseConnection();
     }
 }

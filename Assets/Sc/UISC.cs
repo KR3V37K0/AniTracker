@@ -150,17 +150,34 @@ public class UISC : MonoBehaviour
         {
             StartLoad();
             //animation
-            Sequence.Create(cycles: 1)
+            /*Sequence.Create(cycles: 1)
                 .Group(Tween.Scale(i.transform, 0.9f, 0.2f))
                 .Group(Tween.Color(i.transform.Find("poster/img").GetComponent<Image>(), Color.gray, 0.2f))
                 .Chain(Tween.Scale(i.transform, 1f, 0.2f))
                 .Group(Tween.Color(i.transform.Find("poster/img").GetComponent<Image>(), Color.white, 0.2f))
                 .ChainCallback(() => details.SetActive(true))
                 .ChainCallback(() => active = 5)
-                .ChainCallback(() => activate_Window(0));
+                .ChainCallback(() => activate_Window(0));*/
 
-            StartCoroutine(manager.api.getDetails(anime));
+            StartCoroutine(ViewDetails_Anim(i, anime));
+
+            //StartCoroutine(manager.api.getDetails(anime));
         }    
+    }
+    IEnumerator ViewDetails_Anim(GameObject i, Anime anime)
+    {
+        bool hasPoster = false;
+        if(i.transform.Find("poster")!=null)hasPoster = true;
+
+        yield return Tween.Scale(i.transform, 0.9f, 0.2f);
+        if (hasPoster) yield return Tween.Color(i.transform.Find("poster/img").GetComponent<Image>(), Color.gray, 0.2f);
+        yield return Tween.Scale(i.transform, 1f, 0.2f);
+        if (hasPoster) yield return Tween.Color(i.transform.Find("poster/img").GetComponent<Image>(), Color.white, 0.2f);
+        details.SetActive(true);
+        active = 5;
+        activate_Window(0);
+
+        StartCoroutine(manager.api.getDetails(anime));
     }
 
     public IEnumerator Anime_to_Home(Anime Data,Sprite sprite,int number)
@@ -380,6 +397,8 @@ public class UISC : MonoBehaviour
     void butt_Anime_in_List(string id)
     {
         obj_toList.SetActive(true);
+        StartCoroutine(obj_toList.GetComponentInChildren<FlyOut>().open_panel());
+        //obj_toList.GetComponentInChildren<FlyOut>().OpenPanel();
     }
     void butt_SearchGenre(GameObject b)
     {

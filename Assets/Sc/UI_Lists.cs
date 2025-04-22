@@ -89,7 +89,6 @@ public class UI_Lists : MonoBehaviour
 
     public void open_window(bool switched)
     {
-        Debug.Log(allList.Count);
         if (firstOpen)
         {
             manager.ui.DeleteChildren(list_container);
@@ -143,7 +142,7 @@ public class UI_Lists : MonoBehaviour
 
     private List<GameObject> shiki_list_panel=new List<GameObject>();
     public void fill_toList_panel()
-    {/*
+    {
         foreach(DB_List list in allList)
         {
             Transform pan;
@@ -157,7 +156,7 @@ public class UI_Lists : MonoBehaviour
             pan.GetComponent<Image>().color=list.color;
             pan.name = list.place+"";                    
         }
-        manager.ui.sort_children(obj_toList_container.transform);*/
+        manager.ui.sort_children(obj_toList_container.transform);
     }
     void control_shikiCheck(string place,bool isOn)
     {
@@ -171,7 +170,7 @@ public class UI_Lists : MonoBehaviour
 
     public AnimeDetails currentAnime;
     public void set_ToggleFor(int idA)
-    {/*
+    {
         List<int> lists = FindAnimeInLists(idA);
         foreach (DB_List i in allList)
         {
@@ -181,7 +180,7 @@ public class UI_Lists : MonoBehaviour
                                                             change_inLists(toggle);
                                                         });
         }
-        */
+        
     }
     public void change_inLists(Toggle toggle)
     {
@@ -201,7 +200,9 @@ public class UI_Lists : MonoBehaviour
     }
     void add_inLists(int place)
     {
-        addChanges(true,allList.IndexOf( allList.Find(list => list.place == place)));
+
+        //addChanges(true,allList.IndexOf( allList.Find(list => list.place == place)));
+        addChanges(true, place);
         DB_Anime ani = new DB_Anime(int.Parse(currentAnime.main.id), currentAnime.main.russian, currentAnime.episodesAired, currentAnime.episodes, 0);
         allList.Find(list => list.place == place).animes.Add(ani);
     }
@@ -222,14 +223,15 @@ public class UI_Lists : MonoBehaviour
             if (past != null) 
             { 
                 past.status = "update";
-//ДОДЕЛАТЬ
+//ДОДЕЛАТЬ добавить ID
+                past.list_id = list_index;
                 Debug.Log(past.status + " " + past.anime.name + " in " + allList[list_index].name);
             }
             else 
             {
                 Changes cha = new Changes();
                 cha.status = "create";
-
+                cha.list_id = list_index;
                 cha.anime=new DB_Anime(int.Parse(currentAnime.main.id), currentAnime.main.russian, currentAnime.episodesAired, currentAnime.episodes,
                     allList
                         .SelectMany(list => list.animes)  // "Разворачиваем" все аниме из всех списков
@@ -252,6 +254,10 @@ public class UI_Lists : MonoBehaviour
         Debug.Log("want to save");
         yield return new WaitForSeconds(save_delay);
 
+        foreach(Changes change in changes)
+        {
+            Debug.Log(change.anime.name + " in " + change.list_id);
+        }
 
         if (offlineChanged) manager.db.save_Lists(changes);
         if (onlineChanged) manager.api.save_onlineList(changes);

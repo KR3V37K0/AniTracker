@@ -18,6 +18,7 @@ public class ManagerSC : MonoBehaviour
     public ShikimoriUser user;
     public A_Starter starter;
     public DATABASE_SC db;
+    public CalendarSC calendar;
 
 [Header("----UI----")]
     public UISC ui;
@@ -97,7 +98,13 @@ public class GenreData
 
 public class AnimeDetails
 {
+    public string id;
+    public string name;
+    public string russian;
+    public AnimeImage poster;
+
     public Anime main;
+
     public string kind { get; set; }
     public int episodes { get; set; }
     public int episodesAired { get; set; }
@@ -370,6 +377,22 @@ public class Changes
             if (title != "") title = char.ToUpper(title[0]) + title.Substring(1);
         }
     }
+
+
+// TRACKING AND NOTIFY
+
+public class Tracker
+{
+    public int id_Anime;
+    public DateTime start;
+    public int all;
+    public Tracker(int id_Anime, DateTime start,int all)
+    {
+        this.id_Anime = id_Anime;
+        this.start = start;
+        this.all = all;
+    }
+}
 
 
 

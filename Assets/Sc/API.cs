@@ -122,6 +122,9 @@ public class API : MonoBehaviour
         query {{
             animes(ids:""{main.id}"") 
             {{
+                name
+                russian
+                poster {{ originalUrl }}
                 kind
                 episodes
                 episodesAired
@@ -160,9 +163,20 @@ public class API : MonoBehaviour
         {
             detailResponse response = JsonConvert.DeserializeObject<detailResponse>(apiTask.Result);
             AnimeDetails details = response.data.animes[0];
-            details.main = main;
+
+            if (main.name != null && main.name!="")
+                details.main = main;
+            else 
+            {
+                details.main = new Anime(main.id);
+                details.main.name = response.data.animes[0].name;
+                details.main.russian = response.data.animes[0].russian;
+                details.main.poster = response.data.animes[0].poster;
+                yield return StartCoroutine(DownloadImage(details.main.poster.originalUrl,
+                    (sprite) => details.main.sprite = sprite));
+            }
+
             //Debug.Log(d_details.data.animes[0].related[0].anime.name);
-            //œŒ◊»—“»“‹ Œœ»—¿Õ»≈
             details.description = RemoveTextInBrackets(details.description);
             foreach (Studio s in details.studios)
                 StartCoroutine(DownloadImage(s.imageUrl,

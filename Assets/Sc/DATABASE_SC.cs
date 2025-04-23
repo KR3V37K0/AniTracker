@@ -36,7 +36,8 @@ public class DATABASE_SC : MonoBehaviour
     };
 
     private Queue<Func<Task>> _queue = new Queue<Func<Task>>();
-    private bool _isRunning = false; 
+    private bool _isRunning = false;
+    List<int> savedAnime;
 
     //ОЧЕРЕДИ
     public void Enqueue(Func<Task> function)
@@ -196,32 +197,38 @@ public class DATABASE_SC : MonoBehaviour
     {
         foreach (Changes change in changes)
         {
-            Debug.Log(change.list_id+" "+change.status);
+            Debug.Log(change.list_id+" "+change.status+"  "+change.anime.name);
             if (change.list_id >= 6)
             {
                 int real_id = change.list_id - 5;
                 string sqlQuery = "";
                 switch (change.status)
-                {
+                {                  
                     case "delete DB"://OK
                         sqlQuery = @$"DELETE FROM 
                                                 Link
                                             WHERE
-                                                id_Anime={change.anime.id}";
+                                                id_Anime={change.anime.id}
+                                            AND
+                                                id_List={real_id}";
                                                 
+                        break;
+                    case "delete"://OK
+                        sqlQuery = @$"DELETE FROM 
+                                                Link
+                                            WHERE
+                                                id_Anime={change.anime.id}
+                                            AND
+                                                id_List={real_id}";
+
                         break;
 
 
                     case "update":
-                        sqlQuery = @$"UPDATE Link SET viewed = {change.anime.viewed} WHERE id_Anime = {change.anime.id} AND id_List = {real_id}";
+                        /*sqlQuery = @$"UPDATE Link SET viewed = {change.anime.viewed} WHERE id_Anime = {change.anime.id} AND id_List = {real_id}";
                         Debug.Log("update DB");
-                        break;
-
-
-                    case "create":
+                        break;*/
                         sqlQuery = @$"INSERT INTO Link(id_Anime, id_List, viewed) VALUES({change.anime.id}, {real_id}, {change.anime.viewed})";
-                        //if (manager.ui_lists.FindAnimeInLists(change.anime.id).Count == 0) await createAnime(change.anime);
-                        Debug.Log(manager.ui_lists.FindAnimeInLists(change.anime.id).Count+" count Finder");
                         try
                         {
                             await createAnime(change.anime);
@@ -230,13 +237,27 @@ public class DATABASE_SC : MonoBehaviour
                         {
                             Debug.LogError("Ошибка при добавлении аниме: " + ex.Message);
                         }
-                        Debug.Log("create DB "+change.anime.name);
+                        break;
+
+
+                    case "create":
+                        sqlQuery = @$"INSERT INTO Link(id_Anime, id_List, viewed) VALUES({change.anime.id}, {real_id}, {change.anime.viewed})";
+                        try
+                        {
+                            await createAnime(change.anime);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError("Ошибка при добавлении аниме: " + ex.Message);
+                        }
                         break;
 
                     default:
                         Debug.LogError(@$"неизвестный статус для сохранения в БД: {change.anime.name} {change.status}");
                         break;
                 }
+                if(await list_has_anime(real_id, change.anime.id)) break;
+
                 OpenConnection();
                 dbcmd.CommandText = sqlQuery;
                 //reader = dbcmd.ExecuteReader();
@@ -254,6 +275,9 @@ public class DATABASE_SC : MonoBehaviour
     }
     async Task createAnime(DB_Anime anime)
     {
+        if (savedAnime == null) await ReadAnime();
+        if (savedAnime.Contains(anime.id)) { Debug.Log("Аниме уже существует " + anime.name); return; }
+
         Debug.Log("create new anime in DATABASE "+anime.name+" "+anime.id);
         OpenConnection();
 
@@ -269,8 +293,28 @@ public class DATABASE_SC : MonoBehaviour
         if (writer > 0)
             Debug.Log("Запись ОБ АНИМЕ успешно добавлена!");
 
-
+        savedAnime.Add(anime.id);
         CloseConnection();
+    }
+    async Task ReadAnime()
+    {
+        savedAnime = new List<int>();
+        OpenConnection();
+        string sqlQuery = @$"SELECT 
+                                id
+                            FROM 
+                                Anime";
+        dbcmd.CommandText = sqlQuery;
+        reader = dbcmd.ExecuteReader();
+        while (reader.Read())
+        {
+            savedAnime.Add(reader.GetInt32(0));
+        }
+        CloseConnection();
+    }
+    async Task<bool> list_has_anime(int list, int anime)
+    {
+        return false;
     }
 
     public async Task get_Tracking()

@@ -220,12 +220,12 @@ public class UI_Lists : MonoBehaviour
         Changes past = changes.Find(change => change.anime.id == int.Parse(currentAnime.main.id));
         if (action)  //update or create
         {
-            if (past != null) 
+            if (past != null && list_index<=6) 
             { 
                 past.status = "update";
 //ДОДЕЛАТЬ добавить ID
                 past.list_id = list_index;
-                Debug.Log(past.status + " " + past.anime.name + " in " + allList[list_index].name);
+                //Debug.Log(past.status + " " + past.anime.name + " in " + allList[list_index].name);
             }
             else 
             {
@@ -238,7 +238,7 @@ public class UI_Lists : MonoBehaviour
                         .FirstOrDefault(anime => anime.id == int.Parse(currentAnime.main.id)) // Ищем первое совпадение
                         ?.viewed ?? 0); // Возвращаем viewed или 0, если не найдено
                 changes.Add(cha);
-                Debug.Log(cha.status + " " + cha.anime.name + "  viewed: "+cha.anime.viewed + " in " + allList[list_index].name);
+                //Debug.Log(cha.status + " " + cha.anime.name + "  viewed: "+cha.anime.viewed + " in " + allList[list_index].name);
             }
             
         }

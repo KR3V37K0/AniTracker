@@ -175,6 +175,9 @@ public class DATABASE_SC : MonoBehaviour
             if(reader.GetInt32(1)!=0) manager.user.id = reader.GetInt32(1);
         }
         CloseConnection();
+        await manager.noty.get_Trackers();
+        //manager.noty.trackers = await get_Tracking();
+        await ReadAnime();
         manager.ui_settings.ViewUserInfo();
     }
     public async Task set_currentUser_info()
@@ -195,6 +198,7 @@ public class DATABASE_SC : MonoBehaviour
 
     public async Task save_Lists(List<Changes>changes)
     {
+        _isRunning = true;
         foreach (Changes change in changes)
         {
             Debug.Log(change.list_id+" "+change.status+"  "+change.anime.name);
@@ -256,7 +260,7 @@ public class DATABASE_SC : MonoBehaviour
                         Debug.LogError(@$"неизвестный статус для сохранения в БД: {change.anime.name} {change.status}");
                         break;
                 }
-                if(await list_has_anime(real_id, change.anime.id)) break;
+                if((await list_has_anime(real_id, change.anime.id))&&(change.status== "create"|| change.status == "update")) break;
 
                 OpenConnection();
                 dbcmd.CommandText = sqlQuery;
@@ -269,9 +273,11 @@ public class DATABASE_SC : MonoBehaviour
 
 
                 CloseConnection();
+               
             }
         }
         Debug.Log("...saving offline lists");
+        _isRunning = false;
     }
     async Task createAnime(DB_Anime anime)
     {
@@ -314,27 +320,111 @@ public class DATABASE_SC : MonoBehaviour
     }
     async Task<bool> list_has_anime(int list, int anime)
     {
-        return false;
-    }
-
-    public async Task get_Tracking()
-    {
         OpenConnection();
+        bool has = false;
         string sqlQuery = @$"SELECT 
                                 id_Anime,
-                                1s_Date,
+                                id_List
+                            FROM 
+                                Link
+                            WHERE
+                                id_Anime = {anime},
+                                id_List = {list}";
+        dbcmd.CommandText = sqlQuery;
+
+        using (reader = dbcmd.ExecuteReader())
+        {
+            has = reader.Read(); // вернёт true, если есть хотя бы одна запись
+        }
+
+        CloseConnection();
+        return has;
+    }
+
+    public async Task<List<Tracker>> get_Tracking()
+    {
+        await Task.Delay(5);
+        Debug.Log("DB work");
+        List<Tracker> trackers = new List<Tracker>();
+        try
+        {
+            OpenConnection();
+
+            string sqlQuery = @$"SELECT 
+                                id_Anime,
+                                start_Date,
                                 all_ep
                             FROM 
-                                Track";
-        dbcmd.CommandText = sqlQuery;
-        reader = dbcmd.ExecuteReader();
-        List<Tracker> trackers = new List<Tracker>();
-        while (reader.Read())
-        {
-            Tracker track = new Tracker(reader.GetInt32(0), DateTime.Parse(reader.GetString(1)), reader.GetInt32(2));
-            trackers.Add(track);
+                                Tracking";
+            dbcmd.CommandText = sqlQuery;
 
+            reader = dbcmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                Tracker track = new Tracker(
+                    reader.GetInt32(0),
+                    DateTime.ParseExact(reader.GetString(1), "MM/dd/yyyy HH:mm:ss", CultureInfo.InvariantCulture),
+                    reader.GetInt32(2)
+                );
+                trackers.Add(track);
+            }
+
+            CloseConnection();
         }
+        catch (Exception ex)
+        {
+            Debug.LogError("Ошибка при получении трекеров из базы: " + ex.Message + "\n" + ex.StackTrace);
+        }
+
+        return trackers;
+    }
+    public async Task DeleteTracking(Tracker track)
+    {
+       /* if (_isRunning)
+        {
+            await Task.Delay(500);
+        }*/
+        //_isRunning = true;
+        OpenConnection();
+        string sqlQuery = @$"DELETE FROM 
+                        Tracking
+                    WHERE
+                        id_Anime={track.id_Anime}";
+        dbcmd.CommandText = sqlQuery;
+
+        writer = dbcmd.ExecuteNonQuery();
+
+        if (writer > 0)
+            Debug.Log("NOTY успешно удалена!");
+
         CloseConnection();
+        //_isRunning=false;
+    }
+    public async Task AddTracking(Tracker track,AnimeDetails anime)
+    {
+        /*if (_isRunning)
+        {
+            await Task.Delay(500);
+        }*/
+        // _isRunning=true;
+        if (savedAnime.Contains(int.Parse(anime.main.id))) await createAnime(
+                                    new DB_Anime(
+                                        int.Parse(anime.main.id),
+                                        anime.main.russian,
+                                        anime.episodesAired,
+                                        anime.episodes,
+                                        0));
+
+        OpenConnection();
+        string sqlQuery = @$"INSERT INTO Tracking(id_Anime, start_Date, all_ep) VALUES({track.id_Anime}, ""{track.start}"", {track.all})";
+        dbcmd.CommandText = sqlQuery;
+        writer = dbcmd.ExecuteNonQuery();
+
+        if (writer > 0)
+            Debug.Log("уведомление добавлено в БД");
+
+        CloseConnection();
+       // _isRunning= false;
     }
 }

@@ -35,6 +35,7 @@ public class UISC : MonoBehaviour
     [SerializeField] TMP_Text txt_name;
     [SerializeField] TMP_Text txt_nameEng;
     [SerializeField] Image img_poster;
+    [SerializeField] Toggle bell;               // добавить off/on в details
     [SerializeField] Button btn_Details_List;
     [SerializeField] TMP_Text txt_type;
     [SerializeField] TMP_Text txt_series;
@@ -454,5 +455,8 @@ public class UISC : MonoBehaviour
         icons[1].GetComponent<Button>().interactable = active;
     }
 
-    
+    public void toggle_Bell(Toggle toggle)
+    {
+        manager.noty.changes(manager.ui_lists.currentAnime, toggle.isOn);
+    }
 }

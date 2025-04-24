@@ -16,6 +16,10 @@ public class CalendarSC : MonoBehaviour
     ManagerSC manager;
     [SerializeField] TMP_Text txt_thisMonth, txt_detailed;
     CultureInfo russian = CultureInfo.GetCultureInfo("ru-RU");
+
+    [Header("DETAILS")]
+    [SerializeField] Transform container_Details;
+    [SerializeField] GameObject pref_Anime;
     private void Awake()
     {
         manager = GetComponent<ManagerSC>();
@@ -29,12 +33,34 @@ public class CalendarSC : MonoBehaviour
 
     async Task fill_Page()
     {
-        update_Details();
+        await update_Details();
         txt_thisMonth.text = selectedDate.ToString("MMMM yyyy", russian);
     }
     async Task update_Details()
     {
         txt_detailed.text = FormatDateWithRelativeDay(selectedDate, russian);
+
+        manager.ui.DeleteChildren(container_Details);
+        foreach (EpisodeInfo info in await GetEpisodesOnDate())
+        {
+            await create_Anime_Detail(info);
+        }
+    }
+    async Task create_Anime_Detail(EpisodeInfo info)
+    {
+        Anime anime = manager.noty.trackes_anime.Find(ani => ani.id == (info.AnimeId+""));
+        GameObject obj = Instantiate(pref_Anime, container_Details);
+        obj.GetComponentsInChildren<TMP_Text>()[0].text=anime.russian;
+        obj.GetComponentsInChildren<TMP_Text>()[1].text = info.EpisodeNumber+" из "+info.track.all;
+        obj.GetComponent<Button>().onClick.AddListener(()=>manager.ui.but_ViewDetails(obj, anime));
+
+        if (anime.poster != null)
+        {
+            Sprite spri = null;
+            StartCoroutine(manager.api.DownloadImage(anime.poster.originalUrl, (sprite) => spri = sprite));
+            while (spri == null) { await Task.Delay(100); }
+            obj.transform.Find("poster").GetComponent<Image>().sprite = spri;
+        }
     }
     static string FormatDateWithRelativeDay(DateTime date, CultureInfo culture)
     {
@@ -111,7 +137,7 @@ public class CalendarSC : MonoBehaviour
     [Header("BUTTON")]
     GameObject last_btn;
     DateTime last_day;
-    void OnDaySelected(DateTime date, GameObject btn)
+    async void OnDaySelected(DateTime date, GameObject btn)
     {
         selectedDate = date;
         StartCoroutine(ShowCalendar(date.Year, date.Month));
@@ -122,11 +148,52 @@ public class CalendarSC : MonoBehaviour
         StartCoroutine(Animate_Selector(btn,date));
         last_day = date;
 
-        fill_Page();
+        await fill_Page();
     }
     IEnumerator Animate_Selector(GameObject btn,DateTime date)
     {
         yield return Tween.Position(selector.transform, btn.transform.position, 0.4f);
         selector.GetComponentInChildren<TMP_Text>().text = date.Day + "";
     }
+    public async Task<List<EpisodeInfo>> GetEpisodesOnDate()
+    {
+        while (manager.noty.trackers == null) await Task.Delay(100);
+
+        List<Tracker> trackers = manager.noty.trackers;
+        List<EpisodeInfo> result = new List<EpisodeInfo>();
+
+        foreach (var tracker in trackers)
+        {
+            int daysDiff = (selectedDate.Date - tracker.start.Date).Days;
+
+            if (daysDiff < 0) continue; // еще не вышло
+
+            if (daysDiff % 7 == 0)
+            {
+                int episodeNumber = daysDiff / 7 + 1;
+
+                if (episodeNumber <= tracker.all)
+                {
+                    result.Add(new EpisodeInfo(tracker.id_Anime, episodeNumber, selectedDate,tracker));
+                }
+            }
+        }
+        return result;
+    }
+    public class EpisodeInfo
+    {
+        public int AnimeId;
+        public int EpisodeNumber;
+        public DateTime Date;
+        public Tracker track;
+
+        public EpisodeInfo(int animeId, int episodeNumber, DateTime date, Tracker track)
+        {
+            AnimeId = animeId;
+            EpisodeNumber = episodeNumber;
+            Date = date;
+            this.track = track;
+        }
+    }
+
 }

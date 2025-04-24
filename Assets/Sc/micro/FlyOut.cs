@@ -7,6 +7,7 @@ using static UnityEngine.GraphicsBuffer;
 
 public class FlyOut : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler
 {
+    public bool canClose = true;
     bool _isPressed = false, _inAnim=false;
     [SerializeField] RectTransform panel;
     [SerializeField] Image img_back;
@@ -59,22 +60,26 @@ public class FlyOut : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDr
     }
     public IEnumerator close_panel()
     {
-        _inAnim = true;
-        float elapsed = 0.7f;
-        Vector3 startPos = new Vector3(0, 0, 0);
-        Vector3 targetPos = new Vector3(0, panel.rect.position.y, 0);
-
-        Tween.Alpha(img_back, 0f, 1f);
-
-        while (elapsed > 0)
+        if (canClose)
         {
-            move_to(Vector3.Lerp(startPos, targetPos, elapsed / 0.7f).y);
-            elapsed -= Time.deltaTime;
+            _inAnim = true;
+            float elapsed = 0.7f;
+            Vector3 startPos = new Vector3(0, 0, 0);
+            Vector3 targetPos = new Vector3(0, panel.rect.position.y, 0);
+
+            Tween.Alpha(img_back, 0f, 1f);
+
+            while (elapsed > 0)
+            {
+                move_to(Vector3.Lerp(startPos, targetPos, elapsed / 0.7f).y);
+                elapsed -= Time.deltaTime;
+                yield return null;
+            }
+
+            gameObject.transform.parent.gameObject.SetActive(false);
+            _inAnim = false;
             yield return null;
         }
-
-        gameObject.transform.parent.gameObject.SetActive(false);
-        _inAnim = false;
         yield return null;
     }
     void move_to(float Y)

@@ -124,7 +124,8 @@ public class DATABASE_SC : MonoBehaviour
             string listName = reader.GetString(1);
 
             string[] col = reader.GetString(2).Split('/');
-            Color listColor = Color.HSVToRGB(float.Parse(col[0]), float.Parse(col[1]), float.Parse(col[2]));
+            //Color listColor = Color.HSVToRGB(float.Parse(col[0]), float.Parse(col[1]), float.Parse(col[2]));
+            Color listColor = Color.white;
 
             int listPlace = reader.GetInt32(3);
 
@@ -426,5 +427,64 @@ public class DATABASE_SC : MonoBehaviour
 
         CloseConnection();
        // _isRunning= false;
+    }
+
+
+
+    //List editing
+    public async Task Change_List(DB_List list)
+    {
+        OpenConnection();
+
+        string sqlQuery = @$"UPDATE List 
+                    SET name = ""{list.name}""
+                    WHERE
+                        place = {list.place-6}";
+        dbcmd.CommandText = sqlQuery;
+
+        int rowsAffected = dbcmd.ExecuteNonQuery();
+
+        if (rowsAffected > 0)
+            Debug.Log($"Обновлено записей: {rowsAffected}");
+        else
+            Debug.LogWarning("Запись не найдена или не изменена");
+
+        CloseConnection();
+    }
+    public async Task Delete_List(DB_List list)
+    {
+        OpenConnection();
+
+        string sqlQuery = @$"DELETE FROM List 
+                    WHERE
+                        place = {list.place - 6}";
+        dbcmd.CommandText = sqlQuery;
+
+        int rowsAffected = dbcmd.ExecuteNonQuery();
+
+        if (rowsAffected > 0)
+            Debug.Log($"Удалено записей: {rowsAffected}");
+        else
+            Debug.LogWarning("Запись не найдена");
+
+        CloseConnection();
+    }
+    public async Task Create_List(DB_List list)
+    {
+        OpenConnection();
+
+        string sqlQuery = @$"INSERT INTO List (name, color, place, id_user)
+                    VALUES
+                       (""{list.name}"", ""{"0/0/0"}"", {list.place - 6}, {manager.user.local_id})";
+        dbcmd.CommandText = sqlQuery;
+
+        int rowsAffected = dbcmd.ExecuteNonQuery();
+
+        if (rowsAffected > 0)
+            Debug.Log($"Добавлено: {rowsAffected}");
+        else
+            Debug.LogWarning("Запись не найдена");
+
+        CloseConnection();
     }
 }

@@ -123,43 +123,46 @@ public class A_Starter : MonoBehaviour
     {
         if (manager.hasConnection)
         {
-
-            string url = "https://shikimori.one/api/users/whoami";
-
-            using (UnityWebRequest request = UnityWebRequest.Get(url))
+            if (!online_user_send)
             {
-                request.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("access_token")}");
-                request.SetRequestHeader("Content-Type", "application/json");
-                request.SetRequestHeader("User-Agent", "AniTracker");
-                yield return request.SendWebRequest();
+                online_user_send = true;
+                string url = "https://shikimori.one/api/users/whoami";
 
-                if (request.result == UnityWebRequest.Result.Success)
+                using (UnityWebRequest request = UnityWebRequest.Get(url))
                 {
-                    string jsonResponse = request.downloadHandler.text;
+                    request.SetRequestHeader("Authorization", $"Bearer {PlayerPrefs.GetString("access_token")}");
+                    request.SetRequestHeader("Content-Type", "application/json");
+                    request.SetRequestHeader("User-Agent", "AniTracker");
+                    yield return request.SendWebRequest();
 
-                    ShikimoriUser user = JsonConvert.DeserializeObject<ShikimoriUser>(jsonResponse);
-                    manager.user.id = user.id;
-                    manager.user.avatar = user.avatar;
-                    manager.user.image = user.image;
-                    manager.user.nickname = user.nickname;
+                    if (request.result == UnityWebRequest.Result.Success)
+                    {
+                        string jsonResponse = request.downloadHandler.text;
 
-                    manager.db.Enqueue(manager.db.set_currentUser_info);
-                    //— ¿◊¿“‹ —œ»— » ŒÕÀ¿…Õ
-                    StartCoroutine(manager.ui_lists.setup_allList());
-                    manager.ui_settings.ViewUserInfo();
-                    StopCoroutine(withoutAutentify());
+                        ShikimoriUser user = JsonConvert.DeserializeObject<ShikimoriUser>(jsonResponse);
+                        manager.user.id = user.id;
+                        manager.user.avatar = user.avatar;
+                        manager.user.image = user.image;
+                        manager.user.nickname = user.nickname;
 
-                    //delete
-                    // manager.db.WriteUpdate();
-                }
-                else
-                {
-                    Debug.LogError($"Œ¯Ë·Í‡: {request.error}");
-                    PlayerPrefs.DeleteAll();
-                    PlayerPrefs.SetInt("authorization_shown", 1);
-                    PlayerPrefs.Save();
+                        manager.db.Enqueue(manager.db.set_currentUser_info);
+                        //— ¿◊¿“‹ —œ»— » ŒÕÀ¿…Õ
+                        StartCoroutine(manager.ui_lists.setup_allList());
+                        manager.ui_settings.ViewUserInfo();
+                        StopCoroutine(withoutAutentify());
 
-                    manager.ui_settings.show_popupEnter();
+                        //delete
+                        // manager.db.WriteUpdate();
+                    }
+                    else
+                    {
+                        Debug.LogError($"Œ¯Ë·Í‡: {request.error}");
+                        PlayerPrefs.DeleteAll();
+                        PlayerPrefs.SetInt("authorization_shown", 1);
+                        PlayerPrefs.Save();
+
+                        manager.ui_settings.show_popupEnter();
+                    }
                 }
             }
         }
@@ -169,15 +172,22 @@ public class A_Starter : MonoBehaviour
         }
     }
 
+
+    bool ongoing_send = false;
+    bool online_user_send = false;
     public void getOngoing()
     {
-        //QUERY ONGOING
-        manager.ui_search.getGenres();
-        Query_Search query = new Query_Search();
-        query.status.Add("ongoing");
-        ConnectionData.currentSearch = query;
-        StartCoroutine(manager.api.SearchResult());
-        //StartCoroutine(manager.api.GetOngoingAnime());
+        if (!ongoing_send)
+        {
+            ongoing_send = true;
+            //QUERY ONGOING
+            manager.ui_search.getGenres();
+            Query_Search query = new Query_Search();
+            query.status.Add("ongoing");
+            ConnectionData.currentSearch = query;
+            StartCoroutine(manager.api.SearchResult());
+            //StartCoroutine(manager.api.GetOngoingAnime());
+        }
     }
 
     IEnumerator wait_connection()

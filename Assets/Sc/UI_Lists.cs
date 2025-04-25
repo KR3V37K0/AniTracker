@@ -11,8 +11,9 @@ using System.Numerics;
 public class UI_Lists : MonoBehaviour
 {
     [SerializeField] ManagerSC manager;
-    [SerializeField] GameObject obj_list,obj_view, obj_toList_container, obj_toList_panel, obj_toList_shiki_panel;
+    [SerializeField] GameObject obj_list,obj_view, obj_toList_container, obj_toList_panel, obj_toList_shiki_panel,popup_Edit;
     [SerializeField] Transform list_container,view_container;
+    [SerializeField] Button btn_edit;
     bool firstOpen=true;
     public bool hasOnline = false, hasOffline = false;
 
@@ -37,6 +38,7 @@ public class UI_Lists : MonoBehaviour
         //ONLINE LISTS
         if ((manager.hasConnection) && (manager.user.id != 0))
         {
+            hasOnline = true;
             foreach (string s in manager.db.basic_List_name.Keys)
             {
                 Task<List<DB_Anime>> apiTask= apiTask = manager.api.getList(s);
@@ -69,6 +71,7 @@ public class UI_Lists : MonoBehaviour
     IEnumerator get_Offline()
     {
         //OFFLINE LISTS
+        hasOffline = true;
         Task<List<DB_List>> dbTask = manager.db.Get_AllLists_preview();
         while (!dbTask.IsCompleted)
         {
@@ -89,6 +92,7 @@ public class UI_Lists : MonoBehaviour
 
     public void open_window(bool switched)
     {
+        popup_Edit.SetActive(false);
         if (firstOpen)
         {
             manager.ui.DeleteChildren(list_container);
@@ -105,6 +109,8 @@ public class UI_Lists : MonoBehaviour
         }
         if (!switched)obj_view.SetActive(false);
         manager.ui.sort_children(list_container);
+        manager.ui.sort_children(list_container);
+
 
     }
     public void open_list(int place)
@@ -112,6 +118,10 @@ public class UI_Lists : MonoBehaviour
         manager.ui.DeleteChildren(view_container);
         obj_view.SetActive(true);
         obj_view.GetComponentInChildren<TMP_Text>().text= allList.Find(list => list.place == place).name;
+
+        btn_edit.onClick.RemoveAllListeners();
+        btn_edit.onClick.AddListener(()=>btn_Change_List(allList.Find(list => list.place == place)));
+
         foreach (DB_Anime anime in allList.Find(list => list.place == place).animes)
         {
             GameObject butt = Instantiate(obj_list, view_container);
@@ -212,7 +222,7 @@ public class UI_Lists : MonoBehaviour
         allList.Find(list => list.place == list_id).animes.Remove(allList.Find(list => list.place == list_id).animes.Find(anime => (anime.id + "") == currentAnime.main.id));
     }
 
-    int save_delay = 10;
+    int save_delay = 8;
     Coroutine timer;
     bool offlineChanged = false, onlineChanged = false;
     void addChanges(bool action,int list_index)
@@ -270,5 +280,65 @@ public class UI_Lists : MonoBehaviour
         onlineChanged = false;
         changes = new List<Changes> { };
     }
+
+
+
+        //  EDIT,CREATE,DELETE
+    public async void btn_Create_List()
+    {
+        DB_List added = new DB_List(allList.Count - 6, "новый список", Color.white, allList.Count);
+        allList.Add(added);
+
+        await manager.db.Create_List(added);
+
+        firstOpen = true;
+        open_window(false);
+
+
+    }
+
+    public void btn_Change_List(DB_List list)
+    {
+        firstOpen = true;
+        popup_Edit.SetActive(true);
+        Button[] buts = popup_Edit.GetComponentsInChildren<Button>();
+        //button delete
+        buts[0].onClick.RemoveAllListeners();
+        buts[0].onClick.AddListener(() => btn_Delete_List(list));
+        //button save
+        buts[1].onClick.RemoveAllListeners();
+        buts[1].onClick.AddListener(() => btn_Save_Edit(list));
+
+        popup_Edit.GetComponentInChildren<TMP_InputField>().GetComponentInChildren<TMP_Text>().text = list.name;
+    }
+    public async Task btn_Delete_List(DB_List list)
+    {
+        Debug.Log("удалил " + list.name+" "+allList.Count);
+
+        allList.Remove(list);
+        await manager.db.Delete_List(list);
+
+        Debug.Log(allList.Count);
+        open_window(false);
+    }
+    public void btn_Cancel_Edit()
+    {
+        open_window(false);
+    }
+    public async Task btn_Save_Edit(DB_List list)
+    {
+        list.name
+            =
+            popup_Edit.GetComponentInChildren<TMP_InputField>().text;
+
+        await manager.db.Change_List(list);
+
+       
+
+        open_window(false);
+
+        
+    }
+    
 }
 

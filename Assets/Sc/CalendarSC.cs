@@ -22,11 +22,16 @@ public class CalendarSC : MonoBehaviour
     [SerializeField] GameObject pref_Anime;
     private void Awake()
     {
+        Init();
+    }
+    async Task Init()
+    {
         manager = GetComponent<ManagerSC>();
         manager.calendar = manager.GetComponent<CalendarSC>();
 
-        fill_Page();
-        StartCoroutine( ShowCalendar(today.Year, today.Month));
+        await Task.Delay(3000);
+        await fill_Page();
+        StartCoroutine(ShowCalendar(today.Year, today.Month));
 
         selectedDate = DateTime.Today;
     }

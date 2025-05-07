@@ -133,7 +133,9 @@ public class UISC : MonoBehaviour
                 break;
 
         }
-        if (active == 5) Tween.PositionY(Scroll.transform, 0f, 2f);
+        if (active == 5) Scroll.GetComponent<RectTransform>().anchoredPosition=new Vector2(0,0);
+        //Scroll.GetComponent<Rigidbody2D>().AddForce(new Vector2(0,-100f));
+        // //Tween.PositionY(Scroll.transform, 0f, 2f);
         active = i;     
     }
 

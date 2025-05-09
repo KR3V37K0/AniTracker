@@ -16,6 +16,8 @@ using System.Threading.Tasks;
 using System.Collections;
 using UnityEngine.PlayerLoop;
 using UnityEngine.Assertions;
+using UnityEngine.Networking;
+using UnityEngine.Android;
 
 public class DATABASE_SC : MonoBehaviour
 {
@@ -39,50 +41,144 @@ public class DATABASE_SC : MonoBehaviour
     private bool _isRunning = false;
     List<int> savedAnime;
 
-    //ОЧЕРЕДИ
+    public DATABASE_SC()
+    {
+        conn = SetDataBaseClass.SetDataBase("DATABASE.db");
+    }
+
+    private void Start()
+    {   
+        Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+        #if UNITY_ANDROID
+        if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageWrite))
+        {
+            Permission.RequestUserPermission(Permission.ExternalStorageWrite);
+        }
+        #endif
+        InitializeDatabase();
+    }
+
+    private async void InitializeDatabase()
+    {
+        await CheckAndCopyDatabase();
+    }
+
+    private async Task CheckAndCopyDatabase()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+       /* string targetPath = Path.Combine(Application.persistentDataPath, "DATABASE.db");
+        if (!File.Exists(targetPath))
+        {
+            string sourcePath = Path.Combine(Application.streamingAssetsPath, "DATABASE.db");
+            var www = new UnityEngine.Networking.UnityWebRequest(sourcePath);
+            await www.SendWebRequest();
+            File.WriteAllBytes(targetPath, www.downloadHandler.data);
+        }*/
+        //StartCoroutine(CopyDatabaseAndroid());
+        string targetPath = Path.Combine(Application.persistentDataPath, "DATABASE.db");
+        if (!File.Exists(targetPath))
+        {
+            string sourcePath = Path.Combine(Application.streamingAssetsPath, "DATABASE.db");
+            using (var www = UnityEngine.Networking.UnityWebRequest.Get(sourcePath))
+            {
+                var operation = www.SendWebRequest();
+                
+                // Ожидаем завершения через TaskCompletionSource
+                var tcs = new TaskCompletionSource<bool>();
+                operation.completed += _ => tcs.SetResult(true);
+                await tcs.Task;
+                
+                if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+                {
+                    File.WriteAllBytes(targetPath, www.downloadHandler.data);
+                    MobileDebug.Log("БД успешно скопирована");
+                }
+                else
+                {
+                    MobileDebug.LogError($"Ошибка копирования БД: {www.error}");
+                }
+            }
+        }
+#endif
+    }
+    private IEnumerator CopyDatabaseAndroid()
+    {
+    #if UNITY_ANDROID && !UNITY_EDITOR
+        string targetPath = Path.Combine(Application.persistentDataPath, "DATABASE.db");
+        if (!File.Exists(targetPath))
+        {
+            string sourcePath = Path.Combine(Application.streamingAssetsPath, "DATABASE.db");
+            using (var www = UnityEngine.Networking.UnityWebRequest.Get(sourcePath))
+            {
+                yield return www.SendWebRequest();
+                
+                if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+                {
+                    File.WriteAllBytes(targetPath, www.downloadHandler.data);
+                    MobileDebug.Log("БД успешно скопирована");
+                }
+                else
+                {
+                    MobileDebug.LogError($"Ошибка копирования БД: {www.error}");
+                }
+            }
+        }
+    #endif
+    yield return new WaitForEndOfFrame();
+    }
+
     public void Enqueue(Func<Task> function)
     {
         _queue.Enqueue(function);
         ProcessQueue(); 
     }
+
     private async void ProcessQueue()
     {
         if (_isRunning) return; 
 
         _isRunning = true;
 
-        while (_queue.Count > 0)
+        try
         {
-            Func<Task> function = _queue.Dequeue();
-            await function();
+            while (_queue.Count > 0)
+            {
+                try
+                {
+                    Func<Task> function = _queue.Dequeue();
+                    await function().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    MobileDebug.LogError($"Ошибка в очереди: {ex.Message}");
+                }
+            }
         }
-
-        _isRunning = false;
+        finally
+        {
+            _isRunning = false;
+        }
     }
 
-
-    private void Start()
-    {   
-        Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
-    }
-    void OpenConnection()
+    private void OpenConnection()
     {
+        if (dbconn?.State == ConnectionState.Open) return;
+        
         dbconn = new SqliteConnection(conn);
         dbconn.Open();
         dbcmd = dbconn.CreateCommand();
     }
-    void CloseConnection()
-    {
-        dbcmd.Parameters.Clear();
-        if (reader != null)
-        {
-            reader.Close();
-            reader = null;
-        }
 
-        dbcmd.Dispose();
+    private void CloseConnection()
+    {
+        reader?.Close();
+        reader = null;
+        
+        dbcmd?.Dispose();
         dbcmd = null;
-        dbconn.Close();
+        
+        dbconn?.Close();
+        dbconn?.Dispose();
         dbconn = null;
     }
 
@@ -176,9 +272,13 @@ public class DATABASE_SC : MonoBehaviour
             if(reader.GetInt32(1)!=0) manager.user.id = reader.GetInt32(1);
         }
         CloseConnection();
+        MobileDebug.Log("--из БД-- найдено: "+manager.user.nickname+" "+manager.user.id);
+        MobileDebug.Log(" --из БД-- получаю трекеры");
         await manager.noty.get_Trackers();
+        MobileDebug.Log("--из БД-- трекеры получены. ищу локальные аниме");
         //manager.noty.trackers = await get_Tracking();
         await ReadAnime();
+        MobileDebug.Log("--из БД-- локальные аним проверены. заполняю UI Settings");
         manager.ui_settings.ViewUserInfo();
     }
     public async Task set_currentUser_info()
@@ -202,7 +302,7 @@ public class DATABASE_SC : MonoBehaviour
         _isRunning = true;
         foreach (Changes change in changes)
         {
-            Debug.Log(change.list_id+" "+change.status+"  "+change.anime.name);
+            MobileDebug.Log(change.list_id+" "+change.status+"  "+change.anime.name);
             if (change.list_id >= 6)
             {
                 int real_id = change.list_id - 5;
@@ -231,7 +331,7 @@ public class DATABASE_SC : MonoBehaviour
 
                     case "update":
                         /*sqlQuery = @$"UPDATE Link SET viewed = {change.anime.viewed} WHERE id_Anime = {change.anime.id} AND id_List = {real_id}";
-                        Debug.Log("update DB");
+                        MobileDebug.Log("update DB");
                         break;*/
                         sqlQuery = @$"INSERT INTO Link(id_Anime, id_List, viewed) VALUES({change.anime.id}, {real_id}, {change.anime.viewed})";
                         try
@@ -240,7 +340,7 @@ public class DATABASE_SC : MonoBehaviour
                         }
                         catch (Exception ex)
                         {
-                            Debug.LogError("Ошибка при добавлении аниме: " + ex.Message);
+                            MobileDebug.LogError("Ошибка при добавлении аниме: " + ex.Message);
                         }
                         break;
 
@@ -253,12 +353,12 @@ public class DATABASE_SC : MonoBehaviour
                         }
                         catch (Exception ex)
                         {
-                            Debug.LogError("Ошибка при добавлении аниме: " + ex.Message);
+                            MobileDebug.LogError("Ошибка при добавлении аниме: " + ex.Message);
                         }
                         break;
 
                     default:
-                        Debug.LogError(@$"неизвестный статус для сохранения в БД: {change.anime.name} {change.status}");
+                        MobileDebug.LogError(@$"неизвестный статус для сохранения в БД: {change.anime.name} {change.status}");
                         break;
                 }
                 if((await list_has_anime(real_id, change.anime.id))&&(change.status== "create"|| change.status == "update")) break;
@@ -270,22 +370,22 @@ public class DATABASE_SC : MonoBehaviour
                 writer = dbcmd.ExecuteNonQuery();
 
                 if (writer > 0)
-                    Debug.Log("Запись успешно добавлена!");
+                    MobileDebug.Log("Запись успешно добавлена!");
 
 
                 CloseConnection();
                
             }
         }
-        Debug.Log("...saving offline lists");
+        MobileDebug.Log("...saving offline lists");
         _isRunning = false;
     }
     async Task createAnime(DB_Anime anime)
     {
         if (savedAnime == null) await ReadAnime();
-        if (savedAnime.Contains(anime.id)) { Debug.Log("Аниме уже существует " + anime.name); return; }
+        if (savedAnime.Contains(anime.id)) { MobileDebug.Log("Аниме уже существует " + anime.name); return; }
 
-        Debug.Log("create new anime in DATABASE "+anime.name+" "+anime.id);
+        MobileDebug.Log("create new anime in DATABASE "+anime.name+" "+anime.id);
         OpenConnection();
 
         //string sqlQuery = @$"INSERT INTO Anime(id, name, aired, all) VALUES({anime.id}, {anime.name}, {anime.aired},{anime.all})";
@@ -298,7 +398,7 @@ public class DATABASE_SC : MonoBehaviour
         writer = dbcmd.ExecuteNonQuery();
 
         if (writer > 0)
-            Debug.Log("Запись ОБ АНИМЕ успешно добавлена!");
+            MobileDebug.Log("Запись ОБ АНИМЕ успешно добавлена!");
 
         savedAnime.Add(anime.id);
         CloseConnection();
@@ -345,7 +445,7 @@ public class DATABASE_SC : MonoBehaviour
     public async Task<List<Tracker>> get_Tracking()
     {
         await Task.Delay(5);
-        Debug.Log("DB work");
+        MobileDebug.Log("DB work");
         List<Tracker> trackers = new List<Tracker>();
         try
         {
@@ -375,7 +475,7 @@ public class DATABASE_SC : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogError("Ошибка при получении трекеров из базы: " + ex.Message + "\n" + ex.StackTrace);
+            MobileDebug.LogError("Ошибка при получении трекеров из базы: " + ex.Message + "\n" + ex.StackTrace);
         }
 
         return trackers;
@@ -397,7 +497,7 @@ public class DATABASE_SC : MonoBehaviour
         writer = dbcmd.ExecuteNonQuery();
 
         if (writer > 0)
-            Debug.Log("NOTY успешно удалена!");
+            MobileDebug.Log("NOTY успешно удалена!");
 
         CloseConnection();
         //_isRunning=false;
@@ -423,7 +523,7 @@ public class DATABASE_SC : MonoBehaviour
         writer = dbcmd.ExecuteNonQuery();
 
         if (writer > 0)
-            Debug.Log("уведомление добавлено в БД");
+            MobileDebug.Log("уведомление добавлено в БД");
 
         CloseConnection();
        // _isRunning= false;
@@ -445,9 +545,9 @@ public class DATABASE_SC : MonoBehaviour
         int rowsAffected = dbcmd.ExecuteNonQuery();
 
         if (rowsAffected > 0)
-            Debug.Log($"Обновлено записей: {rowsAffected}");
+            MobileDebug.Log($"Обновлено записей: {rowsAffected}");
         else
-            Debug.LogWarning("Запись не найдена или не изменена");
+            MobileDebug.LogError("Запись не найдена или не изменена");
 
         CloseConnection();
     }
@@ -463,9 +563,9 @@ public class DATABASE_SC : MonoBehaviour
         int rowsAffected = dbcmd.ExecuteNonQuery();
 
         if (rowsAffected > 0)
-            Debug.Log($"Удалено записей: {rowsAffected}");
+            MobileDebug.Log($"Удалено записей: {rowsAffected}");
         else
-            Debug.LogWarning("Запись не найдена");
+            MobileDebug.LogError("Запись не найдена");
 
         CloseConnection();
     }
@@ -481,9 +581,9 @@ public class DATABASE_SC : MonoBehaviour
         int rowsAffected = dbcmd.ExecuteNonQuery();
 
         if (rowsAffected > 0)
-            Debug.Log($"Добавлено: {rowsAffected}");
+            MobileDebug.Log($"Добавлено: {rowsAffected}");
         else
-            Debug.LogWarning("Запись не найдена");
+            MobileDebug.LogError("Запись не найдена");
 
         CloseConnection();
     }

@@ -14,25 +14,31 @@ public class A_Starter : MonoBehaviour
     [SerializeField] GameObject servers;
     private void Awake()
     {
+        MobileDebug.Log("starter!");
         StartSequence();
     }
     async void StartSequence()
     {
+
+
+        MobileDebug.Log("server activating");
         servers.SetActive(false);
         manager = GetComponent<ManagerSC>();
         manager.hasConnection = false;
+        MobileDebug.Log("manager init");
 
-
-        //инициализация локала 
-        if (!PlayerPrefs.HasKey("local_id")) PlayerPrefs.SetInt("local_id", 1);
+        if (!PlayerPrefs.HasKey("local_id")) {PlayerPrefs.SetInt("local_id", 1); MobileDebug.Log("player pref has new");}
         manager.user = new ShikimoriUser("user", PlayerPrefs.GetInt("local_id"));
+        MobileDebug.Log("player pref in user is "+manager.user.nickname+" "+manager.user.local_id);
 
         //инфо о локале
+        MobileDebug.Log("getting user from DB...");
         Task task = manager.db.get_currentUser();
         while (!task.IsCompleted)
         {
             await task;
         }
+        MobileDebug.Log("Task DB complete. start Lists");
         StartCoroutine(manager.ui_lists.setup_allList());
 
     }
@@ -58,12 +64,12 @@ public class A_Starter : MonoBehaviour
             manager.ui.InternetSplash(request.result == UnityWebRequest.Result.Success);
             if (request.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log("Интернет доступен.");
+                MobileDebug.Log("Интернет доступен.");
                 Connect();
             }
             else
             {
-                Debug.Log("Интернет недоступен. Ошибка: " + request.error);
+                MobileDebug.Log("Интернет недоступен. Ошибка: " + request.error);
                 noConnect();
             }
         }
@@ -107,7 +113,7 @@ public class A_Starter : MonoBehaviour
     }
     IEnumerator withoutAutentify()
     {
-        Debug.Log("используем локального юзера");
+        MobileDebug.Log("используем локального юзера");
         while (true)
         {
             if(manager.hasConnection && manager.user.id>0 && manager.ui_lists.hasOffline)
@@ -156,7 +162,7 @@ public class A_Starter : MonoBehaviour
                     }
                     else
                     {
-                        Debug.LogError($"Ошибка: {request.error}");
+                        MobileDebug.LogError($"Ошибка: {request.error}");
                         PlayerPrefs.DeleteAll();
                         PlayerPrefs.SetInt("authorization_shown", 1);
                         PlayerPrefs.Save();
@@ -200,12 +206,12 @@ public class A_Starter : MonoBehaviour
             manager.ui.InternetSplash(request.result == UnityWebRequest.Result.Success);
             if (request.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log("Интернет доступен.");
+                MobileDebug.Log("Интернет доступен.");
                 Connect();
             }
             else
             {
-                Debug.Log("Интернет недоступен. Ошибка: " + request.error);
+                MobileDebug.Log("Интернет недоступен. Ошибка: " + request.error);
                 yield return new WaitForSeconds(5f);
                 StartCoroutine(wait_connection());
             }

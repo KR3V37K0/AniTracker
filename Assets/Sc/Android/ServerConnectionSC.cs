@@ -2,35 +2,55 @@ using UnityEngine;
 using System;
 using UnityEngine.Networking;
 using System.Collections;
+using UnityEngine.Android;
 
 public class DeepLinkHandler : MonoBehaviour
 {
     [SerializeField] ManagerSC manager;
     private static string deepLinkURL;
-
+    Coroutine en;
     private void OnEnable()
     {
-        Application.deepLinkActivated += OnDeepLinkActivated;
-
-        if (PlayerPrefs.HasKey("access_token") && PlayerPrefs.HasKey("token_expiry"))
+        MobileDebug.Log("-- андроид сервер активирован");
+        en=StartCoroutine(onEnable_cor());
+    }
+    IEnumerator onEnable_cor(){
+        // Для файлов
+        if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageWrite))
         {
-            float expiryTime = float.Parse(PlayerPrefs.GetString("token_expiry"));
-
-            if (Time.time < expiryTime)
-            {
-                // ? Токен еще действителен
-                ConnectionData.TOKEN.access_token = PlayerPrefs.GetString("access_token");
-                Debug.Log("? Используем сохраненный токен.");
-                ConnectionData.Succes();
-                return;
-            }
-            else
-            {
-                // ?? Токен истек, пробуем обновить
-                StartCoroutine(RefreshToken());
-                return;
-            }
+            Permission.RequestUserPermission(Permission.ExternalStorageWrite);
         }
+
+        // Для интернета (если callback через https)
+        //if (!Permission.HasUserAuthorizedPermission(Permission.Internet))
+        //{
+        //    Permission.RequestUserPermission(Permission.Internet);
+        //}
+
+
+
+        Application.deepLinkActivated += OnDeepLinkActivated;
+        MobileDebug.Log("-- запрос на проверку ключей");
+        yield return new WaitForSeconds(2f);
+        if (PlayerPrefs.HasKey("access_token") && PlayerPrefs.HasKey("token_expiry"))
+            {MobileDebug.Log("-- ключи найдены");
+                float expiryTime = float.Parse(PlayerPrefs.GetString("token_expiry"));
+
+                if (Time.time < expiryTime)
+                {
+                    // ? Токен еще действителен
+                    ConnectionData.TOKEN.access_token = PlayerPrefs.GetString("access_token");
+                    MobileDebug.Log("? Используем сохраненный токен.");
+                    ConnectionData.Succes();
+                    StopCoroutine(en);
+                }
+                else
+                {
+                    // ?? Токен истек, пробуем обновить
+                    StartCoroutine(RefreshToken());
+                    StopCoroutine(en);
+                }
+            }
 
         // Проверяем, был ли пользователь уведомлен об авторизации
         if (PlayerPrefs.GetInt("authorization_shown", 0) == 0)
@@ -45,7 +65,7 @@ public class DeepLinkHandler : MonoBehaviour
 
     void PanelAuthorize()
     {
-        Debug.Log("?? Предлагаем пользователю авторизоваться.");
+        MobileDebug.Log("?? Предлагаем пользователю авторизоваться.");
         PlayerPrefs.SetInt("authorization_shown", 1); // Запоминаем, что предлагали
         PlayerPrefs.Save();
 
@@ -54,13 +74,13 @@ public class DeepLinkHandler : MonoBehaviour
 
     public void StartAuthorization()
     {
-        Debug.Log("?? Открываем браузер для авторизации.");
+        MobileDebug.Log("?? Открываем браузер для авторизации.");
         Application.OpenURL(ConnectionData.URL_ANDROID);
     }
 
     void OnDeepLinkActivated(string url)
     {
-        Debug.Log("?? Deep Link Activated: " + url);
+        MobileDebug.Log("?? Deep Link Activated: " + url);
         deepLinkURL = url;
     }
 
@@ -72,7 +92,7 @@ public class DeepLinkHandler : MonoBehaviour
 
             if (!string.IsNullOrEmpty(code))
             {
-                Debug.Log("? Получен OAuth2 код: " + code);
+                MobileDebug.Log("? Получен OAuth2 код: " + code);
                 deepLinkURL = null;
                 StartCoroutine(GetAccessToken(code));
             }
@@ -97,6 +117,7 @@ public class DeepLinkHandler : MonoBehaviour
 
     IEnumerator GetAccessToken(string authorizationCode)
     {
+        MobileDebug.Log("-- get access token");
         string url = "https://shikimori.one/oauth/token";
 
         WWWForm form = new WWWForm();
@@ -119,13 +140,13 @@ public class DeepLinkHandler : MonoBehaviour
                 PlayerPrefs.SetString("refresh_token", ConnectionData.TOKEN.refresh_token);
                 PlayerPrefs.SetString("token_expiry", (Time.time + ConnectionData.TOKEN.expires_in).ToString());
 
-                Debug.Log("? Access Token получен!");
+                MobileDebug.Log("? Access Token получен!");
                 ConnectionData.Succes();
             }
             else
             {
-                Debug.LogError($"? Ошибка получения токенов: {request.error}");
-                Debug.LogError($"Ответ сервера: {request.downloadHandler.text}");
+                MobileDebug.LogError($"? Ошибка получения токенов: {request.error}");
+                MobileDebug.LogError($"Ответ сервера: {request.downloadHandler.text}");
             }
         }
     }
@@ -136,7 +157,7 @@ public class DeepLinkHandler : MonoBehaviour
 
         if (string.IsNullOrEmpty(refreshToken))
         {
-            Debug.Log("? Нет refresh_token, требуется повторная авторизация.");
+            MobileDebug.Log("? Нет refresh_token, требуется повторная авторизация.");
             PanelAuthorize();
             yield break;
         }
@@ -161,12 +182,12 @@ public class DeepLinkHandler : MonoBehaviour
                 PlayerPrefs.SetString("refresh_token", ConnectionData.TOKEN.refresh_token);
                 PlayerPrefs.SetString("token_expiry", (Time.time + ConnectionData.TOKEN.expires_in).ToString());
 
-                Debug.Log("? Токен успешно обновлен.");
+                MobileDebug.Log("? Токен успешно обновлен.");
                 ConnectionData.Succes();
             }
             else
             {
-                Debug.Log("? Ошибка обновления токена, требуется повторная аутентификация.");
+                MobileDebug.Log("? Ошибка обновления токена, требуется повторная аутентификация.");
                 PanelAuthorize();
             }
         }

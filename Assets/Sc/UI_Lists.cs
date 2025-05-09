@@ -35,9 +35,11 @@ public class UI_Lists : MonoBehaviour
 
     IEnumerator get_Online()
     {    
+        MobileDebug.Log("--лист-- запрос на онлайн. успешно ли?");
         //ONLINE LISTS
         if ((manager.hasConnection) && (manager.user.id != 0))
         {
+            MobileDebug.Log("--лист-- успешный запрос на онлайн");
             hasOnline = true;
             foreach (string s in manager.db.basic_List_name.Keys)
             {
@@ -48,7 +50,7 @@ public class UI_Lists : MonoBehaviour
                     yield return new WaitForSeconds(0.1f);
                     if (apiTask.IsFaulted)
                     {
-                        Debug.LogError("Задача завершена с ошибкой: " + apiTask.Exception.Message);
+                        MobileDebug.LogError("Задача завершена с ошибкой: " + apiTask.Exception.Message);
                         yield return new WaitForSeconds(0.3f);
                         apiTask = manager.api.getList(s);
                     }
@@ -70,6 +72,7 @@ public class UI_Lists : MonoBehaviour
     }
     IEnumerator get_Offline()
     {
+        MobileDebug.Log("--лист-- запрос на оофлайн");
         //OFFLINE LISTS
         hasOffline = true;
         Task<List<DB_List>> dbTask = manager.db.Get_AllLists_preview();
@@ -235,7 +238,7 @@ public class UI_Lists : MonoBehaviour
                 past.status = "update";
 //ДОДЕЛАТЬ добавить ID
                 past.list_id = list_index;
-                //Debug.Log(past.status + " " + past.anime.name + " in " + allList[list_index].name);
+                //MobileDebug.Log(past.status + " " + past.anime.name + " in " + allList[list_index].name);
             }
             else 
             {
@@ -248,7 +251,7 @@ public class UI_Lists : MonoBehaviour
                         .FirstOrDefault(anime => anime.id == int.Parse(currentAnime.main.id)) // Ищем первое совпадение
                         ?.viewed ?? 0); // Возвращаем viewed или 0, если не найдено
                 changes.Add(cha);
-                //Debug.Log(cha.status + " " + cha.anime.name + "  viewed: "+cha.anime.viewed + " in " + allList[list_index].name);
+                //MobileDebug.Log(cha.status + " " + cha.anime.name + "  viewed: "+cha.anime.viewed + " in " + allList[list_index].name);
             }
             
         }
@@ -256,23 +259,23 @@ public class UI_Lists : MonoBehaviour
         {
             if (past != null) past.status = "delete";
             else changes.Add(new Changes(-1,"delete", new DB_Anime(int.Parse(currentAnime.main.id))));
-            Debug.Log(changes[changes.Count-1].status + " " + changes[changes.Count - 1].anime.name + " ");
+            MobileDebug.Log(changes[changes.Count-1].status + " " + changes[changes.Count - 1].anime.name + " ");
         }
     }
     IEnumerator wait_save()
     {
-        Debug.Log("want to save");
+        MobileDebug.Log("want to save");
         yield return new WaitForSeconds(save_delay);
 
         foreach(Changes change in changes)
         {
-            Debug.Log(change.anime.name + " in " + change.list_id);
+            MobileDebug.Log(change.anime.name + " in " + change.list_id);
         }
 
         if (offlineChanged) manager.db.save_Lists(changes);
         if (onlineChanged) manager.api.save_onlineList(changes);
 
-        Debug.Log("SAVED SAVED SAVED SAVED SAVED");
+        MobileDebug.Log("SAVED SAVED SAVED SAVED SAVED");
 
 
         timer = null;
@@ -313,12 +316,12 @@ public class UI_Lists : MonoBehaviour
     }
     public async Task btn_Delete_List(DB_List list)
     {
-        Debug.Log("удалил " + list.name+" "+allList.Count);
+        MobileDebug.Log("удалил " + list.name+" "+allList.Count);
 
         allList.Remove(list);
         await manager.db.Delete_List(list);
 
-        Debug.Log(allList.Count);
+        MobileDebug.Log(allList.Count+"");
         open_window(false);
     }
     public void btn_Cancel_Edit()

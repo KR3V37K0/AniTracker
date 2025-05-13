@@ -10,7 +10,7 @@ using System.Threading;
 
 public class A_Starter : MonoBehaviour
 {
-    ManagerSC manager;
+    [SerializeField]ManagerSC manager;
     [SerializeField] GameObject servers;
     private void Awake()
     {
@@ -19,17 +19,21 @@ public class A_Starter : MonoBehaviour
     }
     async void StartSequence()
     {
-
+        MobileDebug.Log("ищу БД");
+        await manager.db.InitializeDatabase();
+        MobileDebug.Log("БД найдена");
 
         MobileDebug.Log("server activating");
         servers.SetActive(false);
-        manager = GetComponent<ManagerSC>();
         manager.hasConnection = false;
         MobileDebug.Log("manager init");
 
         if (!PlayerPrefs.HasKey("local_id")) {PlayerPrefs.SetInt("local_id", 1); MobileDebug.Log("player pref has new");}
         manager.user = new ShikimoriUser("user", PlayerPrefs.GetInt("local_id"));
         MobileDebug.Log("player pref in user is "+manager.user.nickname+" "+manager.user.local_id);
+
+
+
 
         //инфо о локале
         MobileDebug.Log("getting user from DB...");

@@ -46,23 +46,28 @@ public class DATABASE_SC : MonoBehaviour
         conn = SetDataBaseClass.SetDataBase("DATABASE.db");
     }
 
-    private void Start()
-    {   
+    private void Awake()
+    {
         Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
-        #if UNITY_ANDROID
+
+#if UNITY_ANDROID
         if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageWrite))
         {
             Permission.RequestUserPermission(Permission.ExternalStorageWrite);
         }
-        #endif
-        InitializeDatabase();
+#endif
+
+        //InitializeDatabase();
     }
 
-    private async void InitializeDatabase()
+    public async Task InitializeDatabase()
     {
         await CheckAndCopyDatabase();
-    }
 
+        // Только теперь подключаемся к БД
+        conn = SetDataBaseClass.SetDataBase("DATABASE.db");
+        MobileDebug.Log("Подключение к БД выполнено");
+    }
     private async Task CheckAndCopyDatabase()
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -101,31 +106,8 @@ public class DATABASE_SC : MonoBehaviour
         }
 #endif
     }
-    private IEnumerator CopyDatabaseAndroid()
-    {
-    #if UNITY_ANDROID && !UNITY_EDITOR
-        string targetPath = Path.Combine(Application.persistentDataPath, "DATABASE.db");
-        if (!File.Exists(targetPath))
-        {
-            string sourcePath = Path.Combine(Application.streamingAssetsPath, "DATABASE.db");
-            using (var www = UnityEngine.Networking.UnityWebRequest.Get(sourcePath))
-            {
-                yield return www.SendWebRequest();
-                
-                if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
-                {
-                    File.WriteAllBytes(targetPath, www.downloadHandler.data);
-                    MobileDebug.Log("БД успешно скопирована");
-                }
-                else
-                {
-                    MobileDebug.LogError($"Ошибка копирования БД: {www.error}");
-                }
-            }
-        }
-    #endif
-    yield return new WaitForEndOfFrame();
-    }
+
+
 
     public void Enqueue(Func<Task> function)
     {

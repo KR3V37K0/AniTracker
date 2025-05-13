@@ -57,15 +57,17 @@ public class CalendarSC : MonoBehaviour
         GameObject obj = Instantiate(pref_Anime, container_Details);
         obj.GetComponentsInChildren<TMP_Text>()[0].text=anime.russian;
         obj.GetComponentsInChildren<TMP_Text>()[1].text = info.EpisodeNumber+" из "+info.track.all;
-        obj.GetComponent<Button>().onClick.AddListener(()=>manager.ui.but_ViewDetails(obj, anime));
-
         if (anime.poster != null)
         {
             Sprite spri = null;
             StartCoroutine(manager.api.DownloadImage(anime.poster.originalUrl, (sprite) => spri = sprite));
             while (spri == null) { await Task.Delay(100); }
-            obj.transform.Find("poster").GetComponent<Image>().sprite = spri;
+            obj.transform.Find("poster/img").GetComponent<Image>().sprite = spri;
+            anime.sprite = spri;
         }
+        obj.GetComponent<Button>().onClick.AddListener(()=>manager.ui.but_ViewDetails(obj, anime));
+
+
     }
     static string FormatDateWithRelativeDay(DateTime date, CultureInfo culture)
     {

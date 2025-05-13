@@ -82,12 +82,27 @@ public class FlyOut : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDr
         }
         yield return null;
     }
+    /* void move_to(float Y)
+     {
+         panel_10_pos = panel.position.y + 5f;
+         newY = Mathf.Clamp(Y / screenSize.y * 10f - 4.8f, -5f, 4.8f);
+         if (newY < -3f && _isPressed && !_inAnim) StartCoroutine(close_panel());
+         panel.position = new Vector3(0, newY, 0);
+         panel.sizeDelta = new Vector2(panel.sizeDelta.x, Y);
+     }*/
     void move_to(float Y)
     {
-        panel_10_pos = panel.position.y + 5f;
+        panel_10_pos = panel.position.y+5f;
         newY = Mathf.Clamp(Y / screenSize.y * 10f - 4.8f, -5f, 4.8f);
         if (newY < -3f && _isPressed && !_inAnim) StartCoroutine(close_panel());
         panel.position = new Vector3(0, newY, 0);
-        panel.sizeDelta = new Vector2(panel.sizeDelta.x, Y);
+        SetPanelHeight(newY);
+    }
+    void SetPanelHeight(float pointerY)
+    {
+        float horizontalMargin = -16.25f;
+
+        panel.offsetMin = new Vector2(horizontalMargin, 0f); // нижн€€ грань зафиксирована
+        panel.offsetMax = new Vector2(-horizontalMargin, panel.rect.height); // высота не трогаем
     }
 }

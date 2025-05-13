@@ -250,8 +250,8 @@ public class UISC : MonoBehaviour
         manager.ui_lists.set_ToggleFor(int.Parse(details.main.id));
 
         //MAIN
-        txt_name.text = details.main.russian;
-        txt_nameEng.text = details.main.name;
+        txt_name.text = "   " + details.main.russian;
+        txt_nameEng.text = "    "+details.main.name;
         img_poster.sprite=details.main.sprite;
         txt_type.text = details.kind;
         txt_series.text=details.episodesAired+" / ";

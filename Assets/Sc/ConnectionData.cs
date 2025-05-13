@@ -12,10 +12,10 @@ public class ConnectionData:MonoBehaviour
     public static string CLIENT_SECRET = "xkOW1ufttEbgksfUJE2owqYlSD_aX4d1T0OhUqxBhCA";
 
     public static string CALLBACK_WINDOWS = "http://localhost:5000/callback";
-    public static string CALLBACK_ANDROID = "AniTracker://callback";
+    public static string CALLBACK_ANDROID = "anitracker://callback";
 
-    public static string URL_WINDOWS = "https://shikimori.one/oauth/authorize?client_id=9sx1ahR0clhL6lWvED6gjeLlKRcsABJAj9SwW33BFMM&response_type=code&redirect_uri=http://localhost:5000/callback";
-    public static string URL_ANDROID = "https://shikimori.one/oauth/authorize?client_id=9sx1ahR0clhL6lWvED6gjeLlKRcsABJAj9SwW33BFMM&redirect_uri=AniTracker://callback&response_type=code";
+    public static string URL_WINDOWS = @$"https://shikimori.one/oauth/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={CALLBACK_WINDOWS}";
+    public static string URL_ANDROID = @$"https://shikimori.one/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={CALLBACK_ANDROID}&response_type=code";
 
     public static TokenResponse TOKEN = new TokenResponse();
     public static Query_Search currentSearch;

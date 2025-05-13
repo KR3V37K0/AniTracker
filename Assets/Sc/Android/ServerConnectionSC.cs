@@ -15,25 +15,13 @@ public class DeepLinkHandler : MonoBehaviour
         en=StartCoroutine(onEnable_cor());
     }
     IEnumerator onEnable_cor(){
-        // Для файлов
-        if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageWrite))
-        {
-            Permission.RequestUserPermission(Permission.ExternalStorageWrite);
-        }
-
-        // Для интернета (если callback через https)
-        //if (!Permission.HasUserAuthorizedPermission(Permission.Internet))
-        //{
-        //    Permission.RequestUserPermission(Permission.Internet);
-        //}
-
-
 
         Application.deepLinkActivated += OnDeepLinkActivated;
         MobileDebug.Log("-- запрос на проверку ключей");
         yield return new WaitForSeconds(2f);
         if (PlayerPrefs.HasKey("access_token") && PlayerPrefs.HasKey("token_expiry"))
-            {MobileDebug.Log("-- ключи найдены");
+        {
+            MobileDebug.Log("-- ключи найдены");
                 float expiryTime = float.Parse(PlayerPrefs.GetString("token_expiry"));
 
                 if (Time.time < expiryTime)
@@ -50,7 +38,7 @@ public class DeepLinkHandler : MonoBehaviour
                     StartCoroutine(RefreshToken());
                     StopCoroutine(en);
                 }
-            }
+        }
 
         // Проверяем, был ли пользователь уведомлен об авторизации
         if (PlayerPrefs.GetInt("authorization_shown", 0) == 0)

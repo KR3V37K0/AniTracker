@@ -19,6 +19,8 @@ public class A_Starter : MonoBehaviour
     }
     async void StartSequence()
     {
+        manager.ui.LOADER_zero.SetActive(true);
+        manager.calendar.my_canvas.SetActive(true);
         MobileDebug.Log("ищу БД");
         await manager.db.InitializeDatabase();
         MobileDebug.Log("БД найдена");
@@ -118,15 +120,17 @@ public class A_Starter : MonoBehaviour
     IEnumerator withoutAutentify()
     {
         MobileDebug.Log("используем локального юзера");
+        MobileDebug.Log(manager.hasConnection +" "+ (manager.user.id > 0) + " " + manager.ui_lists.hasOffline);
+        MobileDebug.Log(" manager.user.id " + manager.user.local_id);
         while (true)
         {
-            if(manager.hasConnection && manager.user.id>0 && manager.ui_lists.hasOffline)
+            if(manager.hasConnection && manager.user.local_id>0 && manager.ui_lists.hasOffline)
             {
                 getOngoing();
                 manager.ui_lists.fill_toList_panel();
                 break;
             }
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(0.2f);
         }
     }
     IEnumerator GetUserInfo_IENUM(int tick)

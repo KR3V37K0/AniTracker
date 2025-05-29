@@ -14,7 +14,7 @@ public class UI_Lists : MonoBehaviour
     [SerializeField] GameObject obj_list,obj_view, obj_toList_container, obj_toList_panel, obj_toList_shiki_panel,popup_Edit;
     [SerializeField] Transform list_container,view_container;
     [SerializeField] Button btn_edit;
-    bool firstOpen=true;
+    public bool firstOpen=true;
     public bool hasOnline = false, hasOffline = false;
 
     public List<DB_List> allList=new List<DB_List>();
@@ -225,7 +225,7 @@ public class UI_Lists : MonoBehaviour
         allList.Find(list => list.place == list_id).animes.Remove(allList.Find(list => list.place == list_id).animes.Find(anime => (anime.id + "") == currentAnime.main.id));
     }
 
-    int save_delay = 8;
+    int save_delay = 3;
     Coroutine timer;
     bool offlineChanged = false, onlineChanged = false;
     void addChanges(bool action,int list_index)
@@ -277,7 +277,7 @@ public class UI_Lists : MonoBehaviour
 
         MobileDebug.Log("SAVED SAVED SAVED SAVED SAVED");
 
-
+        firstOpen = true;
         timer = null;
         offlineChanged = false;
         onlineChanged = false;

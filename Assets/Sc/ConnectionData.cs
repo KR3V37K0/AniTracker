@@ -5,6 +5,7 @@ using UnityEngine.Networking;
 
 public class ConnectionData:MonoBehaviour
 {
+
     public static event Action OnUserAuthenticated;
     public static string code = "";
 

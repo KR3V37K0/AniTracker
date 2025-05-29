@@ -343,20 +343,32 @@ public class DATABASE_SC : MonoBehaviour
                         MobileDebug.LogError(@$"неизвестный статус для сохранения в БД: {change.anime.name} {change.status}");
                         break;
                 }
-                if((await list_has_anime(real_id, change.anime.id))&&(change.status== "create"|| change.status == "update")) break;
+                if ((await list_has_anime(real_id, change.anime.id)) && (change.status == "create" || change.status == "update")) 
+                {
+                    Debug.Log("переписывай эту х№ню");
+                    break; 
+                }
 
-                OpenConnection();
-                dbcmd.CommandText = sqlQuery;
-                //reader = dbcmd.ExecuteReader();
+                try
+                {
+                    OpenConnection();
+                    dbcmd.CommandText = sqlQuery;
+                    writer = dbcmd.ExecuteNonQuery();
 
-                writer = dbcmd.ExecuteNonQuery();
+                    if (writer > 0)
+                        MobileDebug.Log("Запись успешно добавлена в Link!");
+                    else
+                        MobileDebug.Log("НИЧЕГО не добавлено в Link! Запрос: " + sqlQuery);
+                }
+                catch (Exception ex)
+                {
+                    MobileDebug.LogError("Ошибка при добавлении в Link: " + ex.Message + "\nSQL: " + sqlQuery);
+                }
+                finally
+                {
+                    CloseConnection();
+                }
 
-                if (writer > 0)
-                    MobileDebug.Log("Запись успешно добавлена!");
-
-
-                CloseConnection();
-               
             }
         }
         MobileDebug.Log("...saving offline lists");
@@ -372,8 +384,8 @@ public class DATABASE_SC : MonoBehaviour
 
         //string sqlQuery = @$"INSERT INTO Anime(id, name, aired, all) VALUES({anime.id}, {anime.name}, {anime.aired},{anime.all})";
 
-        string sqlQuery = @$"INSERT INTO Anime(id, name, aired, all_ep) VALUES({anime.id}, ""{anime.name}"", {anime.aired},{anime.all})";
-        dbcmd.CommandText = sqlQuery;
+        string Query = @$"INSERT INTO Anime(id, name, aired, all_ep) VALUES({anime.id}, ""{anime.name}"", {anime.aired},{anime.all})";
+        dbcmd.CommandText = Query;
 
         //dbcmd.CommandText = sqlQuery;
         //reader = dbcmd.ExecuteReader();

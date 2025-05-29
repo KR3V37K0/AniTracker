@@ -14,6 +14,7 @@ public class CalendarSC : MonoBehaviour
 {
     [Header("MAIN")]
     ManagerSC manager;
+    public GameObject my_canvas;
     [SerializeField] TMP_Text txt_thisMonth, txt_detailed;
     CultureInfo russian = CultureInfo.GetCultureInfo("ru-RU");
 
@@ -29,7 +30,7 @@ public class CalendarSC : MonoBehaviour
         manager = GetComponent<ManagerSC>();
         manager.calendar = manager.GetComponent<CalendarSC>();
 
-        await Task.Delay(3000);
+        //await Task.Delay(3000);
         await fill_Page();
         StartCoroutine(ShowCalendar(today.Year, today.Month));
 
@@ -116,6 +117,7 @@ public class CalendarSC : MonoBehaviour
         for (int i = 0; i < 42; i++)
         {
             DateTime date = startDate.AddDays(i);
+            dayCellPrefab.name = "daycel_" + date.Day;
             GameObject cellObj = Instantiate(dayCellPrefab, calendarGrid);
             DayCell cell = cellObj.GetComponent<DayCell>();
             cell.Setup(date, date.Month == month, date == today, date == selectedDate, OnDaySelected);
@@ -132,11 +134,19 @@ public class CalendarSC : MonoBehaviour
             }
             
         }
+        yield return new WaitForSeconds(0.5f);
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(calendarGrid as RectTransform);
         if (first)
         {
             first = false;
-            yield return new WaitForSeconds(1f);
+
+            // ѕодождать один кадр, чтобы layout успел обновитьс€
+            yield return new WaitForSeconds(0.5f);
+
             OnDaySelected(selectedDate, today_cell);
+
+            yield return new WaitForSeconds(2f);
         }
     }
 
@@ -146,19 +156,23 @@ public class CalendarSC : MonoBehaviour
     DateTime last_day;
     async void OnDaySelected(DateTime date, GameObject btn)
     {
+        if(!my_canvas.activeSelf)return;
         selectedDate = date;
         StartCoroutine(ShowCalendar(date.Year, date.Month));
 
         last_btn = btn;
         
 
-        StartCoroutine(Animate_Selector(btn,date));
+        
         last_day = date;
+
+        StartCoroutine(Animate_Selector(btn, date));
 
         await fill_Page();
     }
     IEnumerator Animate_Selector(GameObject btn,DateTime date)
     {
+        MobileDebug.Log("CAlendar set date: " + date +" on position "+ btn.gameObject.name+" : "+btn.gameObject.transform.position);
         yield return Tween.Position(selector.transform, btn.transform.position, 0.4f);
         selector.GetComponentInChildren<TMP_Text>().text = date.Day + "";
     }

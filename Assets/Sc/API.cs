@@ -55,10 +55,11 @@ public class API : MonoBehaviour
 
             if (response?.data?.animes != null)
             {
-                manager.ui.clear_Home();
+
+                if(ConnectionData.currentSearch.page==1) manager.ui.clear_Home();
                 manager.ui.activate_Window(0);
                 manager.ui.activate_Window(0);
-                int n = 0;
+                int n = (BatchSize* ConnectionData.currentSearch.page)-BatchSize;
                 foreach (Anime anime in response.data.animes)
                 {
                     int localIndex = n;

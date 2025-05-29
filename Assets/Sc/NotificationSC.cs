@@ -148,6 +148,15 @@ public class NotificationSC : MonoBehaviour
             AndroidNotificationCenter.CancelNotification(baseId + i);
         }
     }
-
+    
+    public async Task<bool> hasNotify(string opened_s)
+    {
+        int opened = int.Parse(opened_s);
+        foreach(Tracker track in trackers)
+        {
+            if(track.id_Anime==opened)return true;
+        }
+        return false;
+    }
 
 }

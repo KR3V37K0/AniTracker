@@ -44,7 +44,7 @@ public class UI_Settings : MonoBehaviour
                 manager.user.sprite = img;
             }));
         txt_name.text = manager.user.nickname;
-        txt_id.text = manager.user.id+"";
+        txt_id.text = "id: " +manager.user.id+"";
         viewer.SetActive(true);
         if (manager.user.id != 0) off_btn_Enter();
     }

@@ -10,11 +10,14 @@ public class UISC : MonoBehaviour
     ManagerSC manager;
 [Header("----PAGES----")]
     public UI_Search ui_search;
-[Header("----POPUPS----")]
+    [Header("----POPUPS----")]
+    [SerializeField] GameObject obj_Popuper;
     [SerializeField] GameObject obj_toList;
     [SerializeField] GameObject popupLoading;
     [SerializeField] GameObject obj_Load;
     [SerializeField] GameObject obj_miniList;
+        public GameObject LOADER_zero;
+    
 [Header("----NAVIGATION----")]
     [SerializeField] GameObject panel_Navigation;
     [SerializeField] GameObject[]icons=new GameObject[6];
@@ -30,7 +33,7 @@ public class UISC : MonoBehaviour
     [SerializeField] GameObject panelAnime,obj_tags,obj_tag;
     [SerializeField] TMP_Text txt_SearchTitle;
 
-[Header("---DETAILS--")]
+    [Header("---DETAILS--")]
     [SerializeField] GameObject Scroll;
     [SerializeField] TMP_Text txt_name;
     [SerializeField] TMP_Text txt_nameEng;
@@ -146,6 +149,8 @@ public class UISC : MonoBehaviour
             go.SetActive(false);
         }
         windows[i].SetActive(true);
+        close_popups();
+        LOADER_zero.SetActive(false);
     }
     public void but_ViewDetails(GameObject i,Anime anime)
     {
@@ -234,7 +239,7 @@ public class UISC : MonoBehaviour
         }
         return -1;
     }
-    public void ViewDetails(AnimeDetails details)
+    public async void ViewDetails(AnimeDetails details)
     {
         manager.ui_lists.currentAnime=details;
         StopLoad();
@@ -257,6 +262,9 @@ public class UISC : MonoBehaviour
         txt_series.text=details.episodesAired+" / ";
         if (details.episodes == 0) txt_series.text += "??";
         else txt_series.text += details.episodes;
+
+        //NOTY BELL
+        bell.isOn = await manager.noty.hasNotify(details.main.id);
 
         txt_status.text=details.status;
         txt_year.text=details.airedOn.date;
@@ -460,5 +468,12 @@ public class UISC : MonoBehaviour
     public void toggle_Bell(Toggle toggle)
     {
         manager.noty.changes(manager.ui_lists.currentAnime, toggle.isOn);
+    }
+    void close_popups()
+    {
+        foreach(Transform g in obj_Popuper.GetComponentInChildren<Transform>())
+        {
+            g.gameObject.SetActive(false);
+        }
     }
 }

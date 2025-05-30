@@ -54,6 +54,18 @@ public class CalendarSC : MonoBehaviour
     }
     async Task create_Anime_Detail(EpisodeInfo info)
     {
+        while (manager == null)
+        {
+            await Task.Delay(100);
+        }
+        while (manager.noty == null)
+        {
+            await Task.Delay(100);
+        }
+        while (manager.noty.trackes_anime == null)
+        {
+            await Task.Delay(100);
+        }
         Anime anime = manager.noty.trackes_anime.Find(ani => ani.id == (info.AnimeId+""));
         GameObject obj = Instantiate(pref_Anime, container_Details);
         obj.GetComponentsInChildren<TMP_Text>()[0].text=anime.russian;

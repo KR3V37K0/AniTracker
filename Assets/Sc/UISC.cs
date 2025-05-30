@@ -250,9 +250,10 @@ public class UISC : MonoBehaviour
         Instantiate(obj_Load, arr_similar);
 
         //List BUTT
+        
         btn_Details_List.onClick.RemoveAllListeners();
         btn_Details_List.onClick.AddListener(() => butt_Anime_in_List(details.main.id));
-        manager.ui_lists.set_ToggleFor(int.Parse(details.main.id));
+
 
         //MAIN
         txt_name.text = "   " + details.main.russian;
@@ -405,11 +406,20 @@ public class UISC : MonoBehaviour
     {
         DeleteChildren(home_slot);
     }
-    void butt_Anime_in_List(string id)
+    async void butt_Anime_in_List(string id)
     {
+        await manager.ui_lists.fill_toList_panel();
         obj_toList.SetActive(true);
         StartCoroutine(obj_toList.GetComponentInChildren<FlyOut>().open_panel());
         //obj_toList.GetComponentInChildren<FlyOut>().OpenPanel();
+
+        foreach(DB_List l in manager.ui_lists.allList)
+        {
+            Debug.Log("     data: id=" + l.id + "  name=" + l.name + "  place=" + l.place);
+        }
+        Debug.Log(id + "   ");
+        Debug.Log(id + "   "+ int.Parse(id));
+        await manager.ui_lists.set_ToggleFor(int.Parse(id));
     }
     void butt_SearchGenre(GameObject b)
     {

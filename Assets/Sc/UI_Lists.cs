@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System;
 using System.Numerics;
+using Unity.VisualScripting;
 
 public class UI_Lists : MonoBehaviour
 {
@@ -154,10 +155,13 @@ public class UI_Lists : MonoBehaviour
     }
 
     private List<GameObject> shiki_list_panel=new List<GameObject>();
-    public void fill_toList_panel()
+    public async Task fill_toList_panel()
     {
+        Debug.Log("----LIST FILL "+allList.Count);
+        manager.ui.DeleteChildren(obj_toList_container.transform);
         foreach(DB_List list in allList)
         {
+            Debug.Log("----LIST FILL "+list.name);
             Transform pan;
             if (list.place < 6)
             {
@@ -170,6 +174,7 @@ public class UI_Lists : MonoBehaviour
             pan.name = list.place+"";                    
         }
         manager.ui.sort_children(obj_toList_container.transform);
+
     }
     void control_shikiCheck(string place,bool isOn)
     {
@@ -182,11 +187,13 @@ public class UI_Lists : MonoBehaviour
 
 
     public AnimeDetails currentAnime;
-    public void set_ToggleFor(int idA)
+    public async Task set_ToggleFor(int idA)
     {
+        await Task.Delay(1);
         List<int> lists = FindAnimeInLists(idA);
         foreach (DB_List i in allList)
         {
+            Debug.Log("----- LIST search " + i.place);
             Toggle toggle = obj_toList_container.transform.Find(i.place + "").GetComponentInChildren<Toggle>();
             toggle.isOn = (lists.Contains(allList.IndexOf(i)));
             toggle.onValueChanged.AddListener(delegate {
@@ -197,6 +204,7 @@ public class UI_Lists : MonoBehaviour
     }
     public void change_inLists(Toggle toggle)
     {
+        Debug.Log("----- CHECK ");
         int n = int.Parse(toggle.gameObject.transform.parent.gameObject.name);
         if (toggle.isOn) add_inLists(n);
         else delete_inLists(n);
@@ -225,7 +233,7 @@ public class UI_Lists : MonoBehaviour
         allList.Find(list => list.place == list_id).animes.Remove(allList.Find(list => list.place == list_id).animes.Find(anime => (anime.id + "") == currentAnime.main.id));
     }
 
-    int save_delay = 3;
+    float save_delay = 1.5f;
     Coroutine timer;
     bool offlineChanged = false, onlineChanged = false;
     void addChanges(bool action,int list_index)
@@ -289,19 +297,31 @@ public class UI_Lists : MonoBehaviour
         //  EDIT,CREATE,DELETE
     public async void btn_Create_List()
     {
-        DB_List added = new DB_List(allList.Count - 6, "новый список", Color.white, allList.Count);
+        DB_List added = new DB_List(allList.Count+6, "новый список", Color.white, allList.Count+6);
         allList.Add(added);
 
+        Debug.Log("----LIST ADD "+added.name);
+
         await manager.db.Create_List(added);
+  
 
         firstOpen = true;
         open_window(false);
+
+        Debug.Log("----LIST SUMMARY " + allList.Count);
 
 
     }
 
     public void btn_Change_List(DB_List list)
     {
+        Debug.Log("----LIST CHANGE " + list.name);
+
+        //allList.Find(x => x.id == list.id)
+        int index = allList.FindIndex(l => l.id == list.id);
+        allList[index] = list;
+
+
         firstOpen = true;
         popup_Edit.SetActive(true);
         Button[] buts = popup_Edit.GetComponentsInChildren<Button>();
@@ -313,6 +333,7 @@ public class UI_Lists : MonoBehaviour
         buts[1].onClick.AddListener(() => btn_Save_Edit(list));
 
         popup_Edit.GetComponentInChildren<TMP_InputField>().GetComponentInChildren<TMP_Text>().text = list.name;
+        Debug.Log("----LIST SUMMARY " + allList.Count);
     }
     public async Task btn_Delete_List(DB_List list)
     {
@@ -323,6 +344,7 @@ public class UI_Lists : MonoBehaviour
 
         MobileDebug.Log(allList.Count+"");
         open_window(false);
+        Debug.Log("----LIST SUMMARY " + allList.Count);
     }
     public void btn_Cancel_Edit()
     {
